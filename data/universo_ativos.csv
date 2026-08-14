@@ -33,3 +33,8 @@ BITO,Alternativos,Bitcoin,-,Exposicao a bitcoin via futuros
 BTCI,Alternativos,Bitcoin com Renda,-,Exposicao a bitcoin com estrategia de covered call para renda
 IBIT,Alternativos,Bitcoin,-,Exposicao a bitcoin spot
 UUP,Dolar/FX,Indice Dolar,-,Forca do dolar americano frente a uma cesta de moedas
+SNDK,Renda Variavel,Semicondutores/Memoria,-,Sandisk Corporation
+SKHY,Renda Variavel,Semicondutores/Memoria,-,SK hynix Inc. (ADR)
+AMZN,Renda Variavel,Tecnologia/E-commerce,-,"Amazon.com, Inc."
+SPCX,Renda Variavel,Aeroespacial,-,Space Exploration Technologies Corp. (SpaceX)
+ORCL,Renda Variavel,Tecnologia/Software,-,Oracle Corporation
