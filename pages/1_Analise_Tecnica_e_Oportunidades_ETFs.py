@@ -7,10 +7,11 @@ RAIZ_PROJETO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RAIZ_PROJETO))
 
 from market_lib.pagina_ativos import renderizar_pagina
-from market_lib.estilo import aplicar_estilo
+from market_lib.estilo import aplicar_estilo, mostrar_logo_sidebar
 
 st.set_page_config(page_title="Analise Tecnica e Oportunidades ETFs", layout="wide", page_icon="🎯")
 aplicar_estilo()
+mostrar_logo_sidebar()
 
 CAMINHO_UNIVERSO = RAIZ_PROJETO / "data" / "universo_ativos.csv"
 

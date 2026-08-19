@@ -1,6 +1,10 @@
 """Paleta e CSS da marca AVIN, compartilhados por todas as paginas."""
 
+from pathlib import Path
+
 import streamlit as st
+
+LOGO_SIDEBAR = Path(__file__).resolve().parents[1] / "assets" / "logo_principal_branco.svg"
 
 NAVY = "#102134"
 GOLD = "#BAA377"
@@ -61,7 +65,32 @@ def aplicar_estilo():
             font-size: 0.8em;
             font-weight: 600;
         }}
+        .swm-kicker {{
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-size: 0.8em;
+            font-weight: 700;
+            color: {GOLD_ESCURO};
+            margin-bottom: 0.2em;
+        }}
+        .swm-section-label {{
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: 0.78em;
+            font-weight: 700;
+            color: {CINZA_SECUNDARIO};
+            margin: 0.4em 0 0.6em 0;
+        }}
+        [data-testid="stVerticalBlockBorderWrapper"] {{
+            border-radius: 10px !important;
+        }}
         </style>
         """,
         unsafe_allow_html=True,
     )
+
+
+def mostrar_logo_sidebar():
+    if LOGO_SIDEBAR.exists():
+        st.sidebar.image(str(LOGO_SIDEBAR), width=140)
+        st.sidebar.divider()

@@ -6,32 +6,55 @@ import streamlit as st
 RAIZ_PROJETO = Path(__file__).resolve().parent
 sys.path.insert(0, str(RAIZ_PROJETO))
 
-from market_lib.estilo import aplicar_estilo
+from market_lib.estilo import aplicar_estilo, mostrar_logo_sidebar
 
-st.set_page_config(page_title="AVIN Quant Dashboard", layout="wide", page_icon="📊")
+st.set_page_config(page_title="Dash Offshore", layout="wide", page_icon="🌐")
 aplicar_estilo()
+mostrar_logo_sidebar()
 
-caminho_logo = RAIZ_PROJETO / "assets" / "logo_avin.png"
-if caminho_logo.exists():
-    st.image(str(caminho_logo), width=280)
-
-st.title("AVIN Quant Dashboard")
-st.caption("Universo global de ativos e leitura de valor relativo — foco offshore.")
-
-st.divider()
-
-st.subheader("🎯 Analise Tecnica e Oportunidades ETFs")
-st.write(
-    "Uma unica pagina com 4 sub-abas: performance do universo de ativos (renda variavel, "
-    "renda fixa por duration/credito e alternativos) e backtest de alocacoes hipoteticas; "
-    "matriz de correlacao, posicao no range e ranking de z-score; medias moveis, RSI e "
-    "volatilidade (Bandas de Bollinger); e um score consolidado de oportunidades cruzando "
-    "valor relativo, posicao no range e momentum."
+st.markdown('<div class="swm-kicker">Offshore · SWM MFO</div>', unsafe_allow_html=True)
+st.title("Dash Offshore")
+st.caption(
+    "Ferramentas para o universo de ativos offshore — hoje reune a analise quant "
+    "de ETFs e acoes; novas ferramentas vao entrar aqui conforme forem construidas."
 )
 
 st.divider()
+
+st.markdown('<div class="swm-section-label">Quant</div>', unsafe_allow_html=True)
+
+col_etf, col_stocks = st.columns(2)
+
+with col_etf:
+    with st.container(border=True):
+        st.markdown("#### 🎯 Analise Tecnica e Oportunidades — ETFs")
+        st.write(
+            "Universo de ETFs (renda variavel, renda fixa por duration/credito e "
+            "alternativos): performance, correlacoes e valor relativo, analise "
+            "tecnica e um score consolidado de oportunidades."
+        )
+        st.page_link(
+            "pages/1_Analise_Tecnica_e_Oportunidades_ETFs.py",
+            label="Abrir",
+            icon="➡️",
+        )
+
+with col_stocks:
+    with st.container(border=True):
+        st.markdown("#### 📈 Analise Tecnica e Oportunidades — Stocks")
+        st.write(
+            "Mesma leitura da aba de ETFs, aplicada ao universo de acoes individuais: "
+            "performance, correlacoes e valor relativo, analise tecnica e score "
+            "consolidado de oportunidades."
+        )
+        st.page_link(
+            "pages/2_Analise_Tecnica_e_Oportunidades_Stocks.py",
+            label="Abrir",
+            icon="➡️",
+        )
+
+st.divider()
 st.caption(
-    "Use o menu na barra lateral para abrir a pagina. "
-    "O universo de ativos padrao fica em data/universo_ativos.csv — edite esse arquivo para "
-    "adicionar ou remover tickers."
+    "Cada universo de ativos e editavel direto na pagina (botao 'Adicionar ticker ao "
+    "universo'), sem precisar editar arquivo. Mais ferramentas offshore chegam aqui em breve."
 )
