@@ -54,6 +54,17 @@ with col_stocks:
         )
 
 st.divider()
+st.markdown('<div class="swm-section-label">Fixed Income</div>', unsafe_allow_html=True)
+
+with st.container(border=True):
+    st.markdown("#### 💵 Fixed Income — Acompanhamento de Bonds")
+    st.write(
+        "Consolida as posicoes de bonds individuais da Avenue e do BTG US por cliente, "
+        "com historico de marcacao pra acompanhar a evolucao do desagio ao longo do tempo."
+    )
+    st.page_link("pages/3_Fixed_Income.py", label="Abrir", icon="➡️")
+
+st.divider()
 st.caption(
     "Cada universo de ativos e editavel direto na pagina (botao 'Adicionar ticker ao "
     "universo'), sem precisar editar arquivo. Mais ferramentas offshore chegam aqui em breve."
