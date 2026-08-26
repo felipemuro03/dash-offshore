@@ -54,6 +54,18 @@ with col_stocks:
         )
 
 st.divider()
+st.markdown('<div class="swm-section-label">Posições</div>', unsafe_allow_html=True)
+
+with st.container(border=True):
+    st.markdown("#### 🧭 Posições Consolidadas")
+    st.write(
+        "Visao consolidada de todas as posicoes (Avenue + BTG US) por cliente e por classe "
+        "de ativo — Equities, Investment Grade por prazo, High Yield, Emerging Markets, "
+        "Money Markets, Inflation, Hybrids, Gold, Crypto e Alternatives."
+    )
+    st.page_link("pages/3_Posicoes_Consolidadas.py", label="Abrir", icon="➡️")
+
+st.divider()
 st.markdown('<div class="swm-section-label">Fixed Income</div>', unsafe_allow_html=True)
 
 with st.container(border=True):
@@ -62,7 +74,7 @@ with st.container(border=True):
         "Consolida as posicoes de bonds individuais da Avenue e do BTG US por cliente, "
         "com historico de marcacao pra acompanhar a evolucao do desagio ao longo do tempo."
     )
-    st.page_link("pages/3_Fixed_Income.py", label="Abrir", icon="➡️")
+    st.page_link("pages/4_Fixed_Income.py", label="Abrir", icon="➡️")
 
 st.divider()
 st.caption(
