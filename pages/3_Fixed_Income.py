@@ -11,7 +11,7 @@ if str(RAIZ_PROJETO) not in sys.path:
     sys.path.insert(0, str(RAIZ_PROJETO))
 
 from market_lib import bonds_pdf, fixed_income  # noqa: E402
-from market_lib.estilo import aplicar_estilo, mostrar_logo_sidebar  # noqa: E402
+from market_lib.estilo import GOLD_ESCURO, NAVY, aplicar_estilo, mostrar_logo_sidebar  # noqa: E402
 
 st.set_page_config(page_title="Dash Offshore — Fixed Income", layout="wide", page_icon="💵")
 aplicar_estilo()
@@ -31,7 +31,7 @@ arquivo_avenue = st.sidebar.file_uploader(
     "Posições em Bonds — Avenue (.xlsx)", type=["xlsx"], key="fi_avenue"
 )
 arquivo_btg = st.sidebar.file_uploader(
-    "Unrealized Gain/Loss — BTG US (.xlsx)", type=["xlsx"], key="fi_btg"
+    "Holdings — BTG US (.xlsx)", type=["xlsx"], key="fi_btg"
 )
 
 historico = fixed_income.carregar_historico(CAMINHO_HISTORICO)
@@ -85,10 +85,58 @@ if clientes_selecionados:
 tabela = tabela.sort_values("Variacao (%)")
 
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("Posições", len(tabela))
-col2.metric("Valor atual total", f"US$ {tabela['Valor Atual (US$)'].sum():,.2f}")
-col3.metric("Ágio/Deságio total", f"US$ {tabela['Variacao (US$)'].sum():,.2f}")
-col4.metric("Posições com deságio (< 0%)", int((tabela["Variacao (%)"] < 0).sum()))
+with col1, st.container(border=True):
+    st.metric("Posições", len(tabela))
+with col2, st.container(border=True):
+    st.metric("Valor atual total", f"US$ {tabela['Valor Atual (US$)'].sum():,.2f}")
+with col3, st.container(border=True):
+    st.metric("Ágio/Deságio total", f"US$ {tabela['Variacao (US$)'].sum():,.2f}")
+with col4, st.container(border=True):
+    st.metric("Posições com deságio (< 0%)", int((tabela["Variacao (%)"] < 0).sum()))
+
+if not tabela.empty:
+    st.markdown("")
+    col_donut1, col_donut2 = st.columns(2)
+
+    with col_donut1, st.container(border=True):
+        st.markdown("###### Maiores ganhadores e perdedores")
+        ranking = tabela.sort_values("Variacao (US$)")
+        n = min(5, len(ranking))
+        indices_ranking = pd.Index(list(ranking.head(n).index) + list(ranking.tail(n).index)).unique()
+        grafico_ranking = ranking.loc[indices_ranking].sort_values("Variacao (US$)").copy()
+        grafico_ranking["Rótulo"] = (
+            grafico_ranking["Cliente"].str.slice(0, 16)
+            + " · "
+            + grafico_ranking["Descricao"].str.slice(0, 22)
+        )
+        fig_ranking = px.bar(
+            grafico_ranking, x="Variacao (US$)", y="Rótulo", orientation="h",
+            color=grafico_ranking["Variacao (US$)"] >= 0,
+            color_discrete_map={True: "#1b7a3d", False: "#b3261e"},
+        )
+        fig_ranking.update_layout(
+            showlegend=False, margin=dict(t=10, b=10, l=10, r=10), height=280,
+            yaxis_title="", xaxis_title="Ágio/Deságio (US$)",
+        )
+        st.plotly_chart(fig_ranking, use_container_width=True)
+
+    with col_donut2, st.container(border=True):
+        st.markdown("###### Ágio x Deságio (valor atual)")
+        tabela_situacao = tabela.copy()
+        tabela_situacao["Situação"] = tabela_situacao["Variacao (US$)"].apply(
+            lambda v: "Ágio" if v >= 0 else "Deságio"
+        )
+        por_situacao = tabela_situacao.groupby("Situação", as_index=False)["Valor Atual (US$)"].sum()
+        fig_situacao = px.pie(
+            por_situacao, names="Situação", values="Valor Atual (US$)", hole=0.6,
+            color="Situação",
+            color_discrete_map={"Ágio": "#1b7a3d", "Deságio": "#b3261e"},
+        )
+        fig_situacao.update_traces(textinfo="percent+label")
+        fig_situacao.update_layout(
+            showlegend=False, margin=dict(t=10, b=10, l=10, r=10), height=280,
+        )
+        st.plotly_chart(fig_situacao, use_container_width=True)
 
 
 def _colorir_variacao(val):
@@ -98,25 +146,26 @@ def _colorir_variacao(val):
     return f"color: {cor}; font-weight: 600"
 
 
-st.dataframe(
-    tabela[
-        ["Data", "Custodia", "Cliente", "Identificador", "Descricao", "Preco",
-         "Valor Atual (US$)", "Valor Compra (US$)", "Variacao (US$)", "Variacao (%)"]
-    ]
-    .style.map(_colorir_variacao, subset=["Variacao (US$)", "Variacao (%)"])
-    .format(
-        {
-            "Preco": "{:.3f}",
-            "Valor Atual (US$)": "US$ {:,.2f}",
-            "Valor Compra (US$)": "US$ {:,.2f}",
-            "Variacao (US$)": "US$ {:,.2f}",
-            "Variacao (%)": "{:.2%}",
-        },
-        na_rep="-",
-    ),
-    use_container_width=True,
-    hide_index=True,
-)
+with st.container(border=True):
+    st.dataframe(
+        tabela[
+            ["Data", "Custodia", "Cliente", "Identificador", "Descricao", "Preco",
+             "Valor Atual (US$)", "Valor Compra (US$)", "Variacao (US$)", "Variacao (%)"]
+        ]
+        .style.map(_colorir_variacao, subset=["Variacao (US$)", "Variacao (%)"])
+        .format(
+            {
+                "Preco": "{:.3f}",
+                "Valor Atual (US$)": "US$ {:,.2f}",
+                "Valor Compra (US$)": "US$ {:,.2f}",
+                "Variacao (US$)": "US$ {:,.2f}",
+                "Variacao (%)": "{:.2%}",
+            },
+            na_rep="-",
+        ),
+        use_container_width=True,
+        hide_index=True,
+    )
 
 st.divider()
 st.subheader("Relatório em PDF")
@@ -177,34 +226,39 @@ else:
             "datas diferentes pra ver a evolução aparecer aqui."
         )
 
-    if evolucao["Preco"].notna().any():
-        fig_preco = px.line(evolucao, x="Data", y="Preco", markers=True, title="Marcação (preço)")
-        st.plotly_chart(fig_preco, use_container_width=True)
-    else:
-        st.caption(
-            "Essa posição não tem preço de marcação explícito (típico da Avenue) — "
-            "acompanhando pela variação % desde a compra abaixo."
+    with st.container(border=True):
+        if evolucao["Preco"].notna().any():
+            fig_preco = px.line(
+                evolucao, x="Data", y="Preco", markers=True, title="Marcação (preço)",
+                color_discrete_sequence=[GOLD_ESCURO],
+            )
+            st.plotly_chart(fig_preco, use_container_width=True)
+        else:
+            st.caption(
+                "Essa posição não tem preço de marcação explícito (típico da Avenue) — "
+                "acompanhando pela variação % desde a compra abaixo."
+            )
+
+        fig_var = px.line(
+            evolucao, x="Data", y="Variacao (%)", markers=True, title="Variação (%) desde a compra",
+            color_discrete_sequence=[NAVY],
         )
+        fig_var.update_layout(yaxis_tickformat=".1%")
+        fig_var.add_hline(y=0, line_dash="dash", line_color="gray")
+        st.plotly_chart(fig_var, use_container_width=True)
 
-    fig_var = px.line(
-        evolucao, x="Data", y="Variacao (%)", markers=True, title="Variação (%) desde a compra"
-    )
-    fig_var.update_layout(yaxis_tickformat=".1%")
-    fig_var.add_hline(y=0, line_dash="dash", line_color="gray")
-    st.plotly_chart(fig_var, use_container_width=True)
-
-    st.dataframe(
-        evolucao[
-            ["Data", "Preco", "Valor Atual (US$)", "Variacao (US$)", "Variacao (%)"]
-        ].style.format(
-            {
-                "Preco": "{:.3f}",
-                "Valor Atual (US$)": "US$ {:,.2f}",
-                "Variacao (US$)": "US$ {:,.2f}",
-                "Variacao (%)": "{:.2%}",
-            },
-            na_rep="-",
-        ),
-        use_container_width=True,
-        hide_index=True,
-    )
+        st.dataframe(
+            evolucao[
+                ["Data", "Preco", "Valor Atual (US$)", "Variacao (US$)", "Variacao (%)"]
+            ].style.format(
+                {
+                    "Preco": "{:.3f}",
+                    "Valor Atual (US$)": "US$ {:,.2f}",
+                    "Variacao (US$)": "US$ {:,.2f}",
+                    "Variacao (%)": "{:.2%}",
+                },
+                na_rep="-",
+            ),
+            use_container_width=True,
+            hide_index=True,
+        )

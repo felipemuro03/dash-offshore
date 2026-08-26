@@ -14,6 +14,9 @@ BRANCO = "#FFFFFF"
 NAVY_SECUNDARIO = "#1A293F"
 BEGE_SECUNDARIO = "#C8BEAA"
 CINZA_SECUNDARIO = "#404751"
+FUNDO_PAGINA = "#F5F4F1"
+
+PALETA_DONUT = [GOLD, NAVY, BEGE_SECUNDARIO, CINZA_SECUNDARIO, GOLD_ESCURO, NAVY_SECUNDARIO]
 
 
 def aplicar_estilo():
@@ -81,8 +84,17 @@ def aplicar_estilo():
             color: {CINZA_SECUNDARIO};
             margin: 0.4em 0 0.6em 0;
         }}
+        [data-testid="stMain"], .main {{
+            background-color: {FUNDO_PAGINA};
+        }}
         [data-testid="stVerticalBlockBorderWrapper"] {{
             border-radius: 10px !important;
+            background-color: {BRANCO};
+            border: 1px solid #EDEBE4 !important;
+            box-shadow: 0 1px 3px rgba(16, 33, 52, 0.06);
+        }}
+        [data-testid="stMetricValue"] {{
+            font-size: 1.6rem;
         }}
         </style>
         """,
