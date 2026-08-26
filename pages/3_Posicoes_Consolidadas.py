@@ -66,6 +66,20 @@ def _grafico_composicao_classe(df, titulo, altura=420):
     st.plotly_chart(fig, use_container_width=True)
 
 
+def _grafico_pizza_classe(df, titulo, altura=440):
+    por_classe = df.groupby("Classe", dropna=False)["Valor Atual (US$)"].sum().reset_index()
+    por_classe["Classe"] = por_classe["Classe"].fillna("Não classificado")
+    por_classe = por_classe[por_classe["Valor Atual (US$)"] > 0]
+    fig = px.pie(
+        por_classe, names="Classe", values="Valor Atual (US$)",
+        color_discrete_sequence=PALETA_DONUT,
+    )
+    fig.update_traces(textinfo="percent+label", textfont_size=13)
+    fig.update_layout(showlegend=True, margin=dict(t=10, b=10, l=10, r=10), height=altura)
+    st.markdown(f"###### {titulo}")
+    st.plotly_chart(fig, use_container_width=True)
+
+
 custodias_sel = st.multiselect(
     "Custódia", sorted(posicoes["Custodia"].unique()),
     default=sorted(posicoes["Custodia"].unique()), key="pc_custodias",
@@ -199,7 +213,7 @@ with tab_detalhe:
 
     st.markdown("")
     with st.container(border=True):
-        _grafico_composicao_classe(posicoes_cliente, f"Asset Allocation — {cliente_detalhe}", altura=380)
+        _grafico_pizza_classe(posicoes_cliente, f"Asset Allocation — {cliente_detalhe}")
 
     st.markdown("")
     st.markdown("###### Posições detalhadas")
