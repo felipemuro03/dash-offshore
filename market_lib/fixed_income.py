@@ -125,3 +125,10 @@ def evolucao_posicao(historico_df, cliente, identificador):
         (historico_df["Cliente"] == cliente) & (historico_df["Identificador"] == identificador)
     ].copy()
     return filtro.sort_values("Data").reset_index(drop=True)
+
+
+def evolucao_cliente(historico_df, cliente):
+    """Evolucao de todas as posicoes de um cliente, uma ao lado da outra — agrupado por
+    posicao (Identificador) e ordenado por data dentro de cada grupo."""
+    filtro = historico_df[historico_df["Cliente"] == cliente].copy()
+    return filtro.sort_values(["Descricao", "Identificador", "Data"]).reset_index(drop=True)

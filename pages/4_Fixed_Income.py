@@ -11,7 +11,7 @@ if str(RAIZ_PROJETO) not in sys.path:
     sys.path.insert(0, str(RAIZ_PROJETO))
 
 from market_lib import bonds_pdf, fixed_income  # noqa: E402
-from market_lib.estilo import GOLD_ESCURO, NAVY, aplicar_estilo, mostrar_logo_sidebar  # noqa: E402
+from market_lib.estilo import aplicar_estilo, mostrar_logo_sidebar  # noqa: E402
 
 st.set_page_config(page_title="Dash Offshore — Fixed Income", layout="wide", page_icon="💵")
 aplicar_estilo()
@@ -194,7 +194,7 @@ else:
     )
 
 st.divider()
-st.header("Evolução de uma posição")
+st.header("Evolução das posições")
 
 if historico.empty:
     st.info(
@@ -202,55 +202,46 @@ if historico.empty:
         "acompanhar a evolução."
     )
 else:
-    col_cli, col_pos = st.columns(2)
-    with col_cli:
-        cliente_evolucao = st.selectbox(
-            "Cliente", sorted(historico["Cliente"].unique()), key="fi_cliente_evo"
-        )
-    posicoes_cliente = historico[historico["Cliente"] == cliente_evolucao][
-        ["Identificador", "Descricao"]
-    ].drop_duplicates()
-    opcoes_pos = posicoes_cliente.apply(
-        lambda r: f"{r['Descricao']} ({r['Identificador']})", axis=1
-    ).tolist()
-    mapa_id = dict(zip(opcoes_pos, posicoes_cliente["Identificador"]))
-    with col_pos:
-        posicao_escolhida = st.selectbox("Posição", opcoes_pos, key="fi_posicao_evo")
-    id_escolhido = mapa_id[posicao_escolhida]
+    cliente_evolucao = st.selectbox(
+        "Cliente", sorted(historico["Cliente"].unique()), key="fi_cliente_evo"
+    )
 
-    evolucao = fixed_income.evolucao_posicao(historico, cliente_evolucao, id_escolhido)
+    evolucao = fixed_income.evolucao_cliente(historico, cliente_evolucao)
 
-    if len(evolucao) < 2:
-        st.info(
-            "Só tem 1 snapshot salvo pra essa posição ainda — suba e salve planilhas em "
-            "datas diferentes pra ver a evolução aparecer aqui."
-        )
+    def _tendencia(diff):
+        if pd.isna(diff):
+            return "— primeiro registro"
+        if diff > 0:
+            return "▲ Melhorou"
+        if diff < 0:
+            return "▼ Piorou"
+        return "● Igual"
+
+    def _cor_tendencia(val):
+        if val.startswith("▲"):
+            return "color: #1b7a3d; font-weight: 600"
+        if val.startswith("▼"):
+            return "color: #b3261e; font-weight: 600"
+        return ""
+
+    evolucao_exibicao = evolucao.copy()
+    evolucao_exibicao["Tendência"] = (
+        evolucao_exibicao.groupby("Identificador")["Variacao (%)"].diff().apply(_tendencia)
+    )
 
     with st.container(border=True):
-        if evolucao["Preco"].notna().any():
-            fig_preco = px.line(
-                evolucao, x="Data", y="Preco", markers=True, title="Marcação (preço)",
-                color_discrete_sequence=[GOLD_ESCURO],
-            )
-            st.plotly_chart(fig_preco, use_container_width=True)
-        else:
-            st.caption(
-                "Essa posição não tem preço de marcação explícito (típico da Avenue) — "
-                "acompanhando pela variação % desde a compra abaixo."
-            )
-
-        fig_var = px.line(
-            evolucao, x="Data", y="Variacao (%)", markers=True, title="Variação (%) desde a compra",
-            color_discrete_sequence=[NAVY],
+        st.caption(
+            "Cada posição comparada só com o próprio histórico (não entre bonds "
+            "diferentes) — 'primeiro registro' quando só tem 1 snapshot salvo pra aquela "
+            "posição ainda."
         )
-        fig_var.update_layout(yaxis_tickformat=".1%")
-        fig_var.add_hline(y=0, line_dash="dash", line_color="gray")
-        st.plotly_chart(fig_var, use_container_width=True)
-
         st.dataframe(
-            evolucao[
-                ["Data", "Preco", "Valor Atual (US$)", "Variacao (US$)", "Variacao (%)"]
-            ].style.format(
+            evolucao_exibicao[
+                ["Data", "Descricao", "Preco", "Valor Atual (US$)", "Variacao (US$)",
+                 "Variacao (%)", "Tendência"]
+            ]
+            .style.map(_cor_tendencia, subset=["Tendência"])
+            .format(
                 {
                     "Preco": "{:.3f}",
                     "Valor Atual (US$)": "US$ {:,.2f}",
