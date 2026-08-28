@@ -128,8 +128,8 @@ def _montar_tabela(df):
     return tabela
 
 
-def gerar_pdf_posicao(df, titulo, data_snapshot=None):
-    """df: linhas ja filtradas (posicoes de 1 cliente, ou de todos, pra uso interno)."""
+def _montar_documento(subtitulo, rodape_cliente):
+    """Doc + callback de cabecalho/rodape compartilhados pelos relatorios de bonds."""
     buffer = BytesIO()
     largura_pagina, altura_pagina = landscape(A4)
     margem_lateral = 1.5 * cm
@@ -146,10 +146,7 @@ def gerar_pdf_posicao(df, titulo, data_snapshot=None):
         canvas.drawString(margem_lateral + 2.1 * cm, altura_pagina - 1.55 * cm, "SWM MFO")
         canvas.setFont("Helvetica", 9)
         canvas.setFillColor(CINZA)
-        canvas.drawString(
-            margem_lateral + 2.1 * cm, altura_pagina - 2.05 * cm,
-            "Relatório de Posição — Fixed Income (Bonds)",
-        )
+        canvas.drawString(margem_lateral + 2.1 * cm, altura_pagina - 2.05 * cm, subtitulo)
         canvas.setStrokeColor(OURO)
         canvas.setLineWidth(1.3)
         canvas.line(margem_lateral, altura_pagina - 2.35 * cm, largura_pagina - margem_lateral, altura_pagina - 2.35 * cm)
@@ -159,13 +156,21 @@ def gerar_pdf_posicao(df, titulo, data_snapshot=None):
         canvas.line(margem_lateral, 1.5 * cm, largura_pagina - margem_lateral, 1.5 * cm)
         canvas.setFont("Helvetica-Oblique", 7.5)
         canvas.setFillColor(CINZA)
-        canvas.drawString(margem_lateral, 1.1 * cm, f"Cliente: {titulo}  |  Confidencial")
+        canvas.drawString(margem_lateral, 1.1 * cm, f"{rodape_cliente}  |  Confidencial")
         canvas.drawRightString(largura_pagina - margem_lateral, 1.1 * cm, f"Página {doc.page}")
         canvas.restoreState()
 
     doc = SimpleDocTemplate(
         buffer, pagesize=landscape(A4),
         topMargin=2.9 * cm, bottomMargin=2 * cm, leftMargin=margem_lateral, rightMargin=margem_lateral,
+    )
+    return buffer, doc, _cabecalho_rodape
+
+
+def gerar_pdf_posicao(df, titulo, data_snapshot=None):
+    """df: linhas ja filtradas (posicoes de 1 cliente, ou de todos, pra uso interno)."""
+    buffer, doc, _cabecalho_rodape = _montar_documento(
+        "Relatório de Posição — Fixed Income (Bonds)", f"Cliente: {titulo}"
     )
 
     data_str = data_snapshot or dt.date.today().strftime("%d/%m/%Y")
@@ -194,6 +199,102 @@ def gerar_pdf_posicao(df, titulo, data_snapshot=None):
         Paragraph(
             "Ágio/Deságio (US$) = Valor Atual &minus; Valor de Compra. Não inclui juros/"
             "cupons recebidos ao longo do período, só a marcação do ativo em si.",
+            _ESTILO_RODAPE,
+        ),
+    ]
+
+    doc.build(elementos, onFirstPage=_cabecalho_rodape, onLaterPages=_cabecalho_rodape)
+    return buffer.getvalue()
+
+
+CABECALHO_EVOLUCAO = [
+    "Data", "Ativo", "Preço", "Valor Atual (US$)", "Variação (US$)", "Variação (%)", "Tendência",
+]
+
+
+def _formatar_linhas_evolucao(df):
+    linhas = [CABECALHO_EVOLUCAO]
+    for _, row in df.iterrows():
+        preco = f"{row['Preco']:.3f}" if pd.notna(row["Preco"]) else "-"
+        variacao_pct = f"{row['Variacao (%)']:.2%}" if pd.notna(row["Variacao (%)"]) else "-"
+        data_str = pd.to_datetime(row["Data"]).strftime("%d/%m/%Y")
+        linhas.append([
+            data_str,
+            Paragraph(str(row["Descricao"]), _ESTILO_DESC),
+            preco,
+            f"{row['Valor Atual (US$)']:,.2f}",
+            f"{row['Variacao (US$)']:,.2f}",
+            variacao_pct,
+            str(row["Tendência"]),
+        ])
+    return linhas
+
+
+def _montar_tabela_evolucao(df):
+    dados = _formatar_linhas_evolucao(df)
+    tabela = Table(
+        dados,
+        colWidths=[2.2 * cm, 6.4 * cm, 1.8 * cm, 2.8 * cm, 2.6 * cm, 2.2 * cm, 2.9 * cm],
+        repeatRows=1,
+    )
+    estilo = [
+        ("BACKGROUND", (0, 0), (-1, 0), PRETO),
+        ("TEXTCOLOR", (0, 0), (-1, 0), BRANCO),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [BRANCO, CLARO]),
+        ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#DDDDDD")),
+        ("ALIGN", (2, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 0), (-1, -1), 3),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+    ]
+    for i, (_, row) in enumerate(df.iterrows(), start=1):
+        cor = VERMELHO if row["Variacao (US$)"] < 0 else VERDE
+        estilo.append(("TEXTCOLOR", (4, i), (5, i), cor))
+        tendencia = str(row["Tendência"])
+        if tendencia.startswith("▲"):
+            estilo.append(("TEXTCOLOR", (6, i), (6, i), VERDE))
+        elif tendencia.startswith("▼"):
+            estilo.append(("TEXTCOLOR", (6, i), (6, i), VERMELHO))
+    tabela.setStyle(TableStyle(estilo))
+    return tabela
+
+
+def gerar_pdf_evolucao(df, cliente):
+    """df: evolucao de todas as posicoes de 1 cliente, ja com a coluna 'Tendência' calculada
+    (mesmo formato exibido na tela — colunas Data, Descricao, Preco, Valor Atual (US$),
+    Variacao (US$), Variacao (%), Tendência)."""
+    buffer, doc, _cabecalho_rodape = _montar_documento(
+        "Evolução das Posições — Fixed Income (Bonds)", f"Cliente: {cliente}"
+    )
+
+    n_posicoes = df["Descricao"].nunique()
+    n_snapshots = df["Data"].nunique()
+    n_melhorou = int(df["Tendência"].str.startswith("▲").sum())
+    n_piorou = int(df["Tendência"].str.startswith("▼").sum())
+
+    cards = [
+        ("Posições Acompanhadas", str(n_posicoes), False),
+        ("Snapshots no Período", str(n_snapshots), False),
+        ("Melhoraram", str(n_melhorou), False),
+        ("Pioraram", str(n_piorou), True),
+    ]
+
+    largura_conteudo = doc.width
+
+    elementos = [
+        Paragraph(f"Evolução das posições — {cliente}", _ESTILO_TITULO),
+        Paragraph(f"Gerado em {dt.date.today().strftime('%d/%m/%Y')}", _ESTILO_SUB),
+        _grade_cards(cards, por_linha=4, largura_total=largura_conteudo),
+        Spacer(1, 10),
+        Paragraph("Histórico por posição", _ESTILO_SECAO),
+        _montar_tabela_evolucao(df.sort_values(["Descricao", "Data"])),
+        Spacer(1, 10),
+        Paragraph(
+            "Tendência compara cada posição só com o próprio histórico (não entre bonds "
+            "diferentes) — 'primeiro registro' quando só há 1 snapshot salvo pra aquela "
+            "posição ainda.",
             _ESTILO_RODAPE,
         ),
     ]

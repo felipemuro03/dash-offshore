@@ -253,3 +253,12 @@ else:
             use_container_width=True,
             hide_index=True,
         )
+
+    pdf_evolucao_bytes = bonds_pdf.gerar_pdf_evolucao(evolucao_exibicao, cliente_evolucao)
+    st.download_button(
+        "📄 Gerar PDF da evolução",
+        data=pdf_evolucao_bytes,
+        file_name=f"evolucao_bonds_{cliente_evolucao.replace(' ', '_')}_{dt.date.today().isoformat()}.pdf",
+        mime="application/pdf",
+        key="fi_download_pdf_evolucao",
+    )
