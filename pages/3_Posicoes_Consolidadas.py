@@ -9,7 +9,7 @@ RAIZ_PROJETO = Path(__file__).resolve().parents[1]
 if str(RAIZ_PROJETO) not in sys.path:
     sys.path.insert(0, str(RAIZ_PROJETO))
 
-from market_lib import classificacao, posicoes_consolidadas  # noqa: E402
+from market_lib import classificacao, posicoes_consolidadas, revisao_carteiras  # noqa: E402
 from market_lib.estilo import PALETA_DONUT, aplicar_estilo, mostrar_logo_sidebar  # noqa: E402
 
 st.set_page_config(page_title="Dash Offshore — Posições Consolidadas", layout="wide", page_icon="🧭")
@@ -24,6 +24,7 @@ st.caption(
 )
 
 CAMINHO_CLASSIFICACAO = RAIZ_PROJETO / "data" / "classificacao_ativos.csv"
+CAMINHO_REVISAO = RAIZ_PROJETO / "data" / "revisao_carteiras_historico.csv"
 
 st.sidebar.header("1. Subir as planilhas")
 arquivo_avenue = st.sidebar.file_uploader(
@@ -31,6 +32,11 @@ arquivo_avenue = st.sidebar.file_uploader(
 )
 arquivo_btg = st.sidebar.file_uploader(
     "Holdings — BTG US (.xlsx)", type=["xlsx"], key="pc_btg"
+)
+arquivo_revisao = st.sidebar.file_uploader(
+    "Revisão de Carteiras (.xlsx, opcional)", type=["xlsx"], key="pc_revisao",
+    help="Planilha com as abas 'Avenue' e 'BTG US' — Nome da Conta, Número, 12 meses, "
+    "Principal detrator. Salva um snapshot de hoje pra acompanhar a revisão ao longo do tempo.",
 )
 
 if arquivo_avenue is None and arquivo_btg is None:
@@ -42,6 +48,21 @@ with st.spinner("Lendo e classificando as posições..."):
     btg_df = posicoes_consolidadas.carregar_btg_holdings(arquivo_btg) if arquivo_btg else None
     manual_df = classificacao.carregar_classificacao_manual(CAMINHO_CLASSIFICACAO)
     posicoes = posicoes_consolidadas.montar_posicoes(avenue_df, btg_df, manual_df)
+
+revisao_historico = revisao_carteiras.carregar_historico(CAMINHO_REVISAO)
+if arquivo_revisao is not None:
+    revisao_snapshot = revisao_carteiras.montar_snapshot(
+        revisao_carteiras.carregar_revisao(arquivo_revisao)
+    )
+    st.sidebar.caption(
+        "⚠️ Nesse app publicado (Streamlit Cloud), o botão abaixo só vale pra esta sessão "
+        "— rode local e suba com `git push` pra ficar valendo de verdade."
+    )
+    if st.sidebar.button("💾 Salvar revisão de hoje no histórico"):
+        revisao_historico = revisao_carteiras.salvar_snapshot(
+            CAMINHO_REVISAO, revisao_historico, revisao_snapshot
+        )
+        st.sidebar.success(f"Revisão salva — {len(revisao_snapshot)} clientes.")
 
 if posicoes.empty:
     st.warning("Nenhuma posição encontrada nas planilhas subidas.")
@@ -218,13 +239,51 @@ with tab_detalhe:
     st.markdown("")
     st.markdown("###### Posições detalhadas")
     with st.container(border=True):
+        posicoes_cliente_pct = posicoes_cliente.copy()
+        patrimonio_cliente = posicoes_cliente_pct["Valor Atual (US$)"].sum()
+        posicoes_cliente_pct["% da Carteira"] = (
+            posicoes_cliente_pct["Valor Atual (US$)"] / patrimonio_cliente
+            if patrimonio_cliente
+            else 0.0
+        )
         st.dataframe(
-            posicoes_cliente[["Custodia", "Ticker", "Descricao", "Categoria", "Classe", "Valor Atual (US$)"]]
+            posicoes_cliente_pct[
+                ["Custodia", "Ticker", "Descricao", "Categoria", "Classe",
+                 "Valor Atual (US$)", "% da Carteira"]
+            ]
             .sort_values("Valor Atual (US$)", ascending=False)
-            .style.format({"Valor Atual (US$)": "US$ {:,.2f}"}, na_rep="-"),
+            .style.format(
+                {"Valor Atual (US$)": "US$ {:,.2f}", "% da Carteira": "{:.2%}"}, na_rep="-"
+            ),
             use_container_width=True,
             hide_index=True,
         )
+
+    st.markdown("")
+    st.markdown("###### Revisão de carteira")
+    revisao_cliente = revisao_carteiras.historico_do_cliente(revisao_historico, cliente_detalhe)
+    with st.container(border=True):
+        if revisao_cliente.empty:
+            st.caption(
+                "Nenhuma revisão salva ainda pra esse cliente — suba a planilha de Revisão "
+                "de Carteiras na barra lateral e clique em Salvar."
+            )
+        else:
+            mais_recente = revisao_cliente.iloc[0]
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.metric("Retorno 12 meses (mais recente)", f"{mais_recente['Retorno 12m']:.2%}")
+            with col_b:
+                st.metric("Data da revisão", mais_recente["Data"])
+            st.caption(f"Principal detrator: {mais_recente['Principal Detrator']}")
+            if len(revisao_cliente) > 1:
+                with st.expander("Ver histórico completo de revisões desse cliente"):
+                    st.dataframe(
+                        revisao_cliente[["Data", "Retorno 12m", "Principal Detrator"]]
+                        .style.format({"Retorno 12m": "{:.2%}"}),
+                        use_container_width=True,
+                        hide_index=True,
+                    )
 
 st.divider()
 st.subheader("Classificação manual")
