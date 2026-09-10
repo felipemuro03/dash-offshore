@@ -97,6 +97,22 @@ def variacao_percentual(serie: pd.Series, dias: int) -> float:
     return (preco_atual / preco_base - 1) * 100
 
 
+def variacao_dias_uteis(serie: pd.Series, dias_uteis: int) -> float:
+    """Variacao percentual usando N pregoes (dias uteis) mais recentes, contando linhas
+    da serie em vez de dias corridos — mesma convencao que o Yahoo Finance usa pra '5D'.
+    variacao_percentual(dias corridos) pode pegar uma base de comparacao bem diferente
+    quando o corte de N dias corridos cai perto de um fim de semana/feriado com o preco
+    tendo se mexido bastante logo antes: ex. BITO, corte em 7 dias corridos comparou
+    contra um pico isolado de 1 dia (11.01) e deu -5.9%, enquanto os ultimos 5 pregões
+    (a mesma janela que o Yahoo mostra) deram -0.34%."""
+    serie = serie.dropna()
+    if len(serie) <= dias_uteis:
+        return np.nan
+    preco_base = serie.iloc[-(dias_uteis + 1)]
+    preco_atual = serie.iloc[-1]
+    return (preco_atual / preco_base - 1) * 100
+
+
 def variacao_ytd(serie: pd.Series) -> float:
     ano_atual = serie.index[-1].year
     antes_do_ano = serie[serie.index.year < ano_atual]
@@ -127,7 +143,7 @@ def montar_tabela_performance(precos: pd.DataFrame, universo: pd.DataFrame, nome
                 "Duration_Bucket": linha_universo["Duration_Bucket"],
                 "Descricao": linha_universo.get("Descricao", ""),
                 "Preco Atual (US$)": preco_atual,
-                "Variacao 1 Semana (%)": variacao_percentual(serie, 7),
+                "Variacao 1 Semana (%)": variacao_dias_uteis(serie, 5),
                 "Variacao 1 Mes (%)": variacao_percentual(serie, 30),
                 "Variacao YTD (%)": variacao_ytd(serie),
                 "Variacao 1 Ano (%)": variacao_percentual(serie, 365),
