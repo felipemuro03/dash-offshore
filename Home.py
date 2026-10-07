@@ -76,6 +76,15 @@ with st.container(border=True):
     )
     st.page_link("pages/4_Fixed_Income.py", label="Abrir", icon="➡️")
 
+with st.container(border=True):
+    st.markdown("#### 🎯 Fixed Income — Oportunidades de Alocação")
+    st.write(
+        "Sobe o bond run da Avenue e/ou do BTG (PDF) e filtra por YTW, rating, prazo, "
+        "duration e setor pra achar a melhor oportunidade — com spread vs Treasury e "
+        "comparação do mesmo bond entre as duas casas."
+    )
+    st.page_link("pages/5_Oportunidades_Fixed_Income.py", label="Abrir", icon="➡️")
+
 st.divider()
 st.caption(
     "Cada universo de ativos e editavel direto na pagina (botao 'Adicionar ticker ao "
