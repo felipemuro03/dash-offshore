@@ -79,12 +79,16 @@ def _cor(d, polaridade):
     return VERDE if (d > 0) == polaridade else VERMELHO
 
 
-def _com_setas(valor_txt, d, polaridade):
-    """(texto com seta, css) de uma célula."""
+PALAVRA = {1: "Higher", -1: "Lower", 0: "Flat"}
+
+
+def _celula_yoy(d, polaridade, com_palavra=True):
+    """(texto, css) da coluna de variação: seta (+ palavra) colorida; vazio se não há comparação."""
     seta = _seta(d)
-    if not seta or valor_txt == "n/a":
-        return valor_txt, ""
-    return f"{valor_txt}  {seta}", f"color: {_cor(d, polaridade)}; font-weight: 600"
+    if not seta:
+        return "", ""
+    texto = f"{seta} {PALAVRA[int(d)]}" if com_palavra else seta
+    return texto, f"color: {_cor(d, polaridade)}; font-weight: 600"
 
 
 # ---------- Visão geral ----------
@@ -112,8 +116,9 @@ def _tabela_geral():
         }
         css = {}
         for coluna, (chave, pol) in COLUNAS_GERAL.items():
-            texto, estilo = _com_setas(fmt(r[chave]), r.get(chave + "_dir"), pol)
-            linha[coluna], css[coluna] = texto, estilo
+            linha[coluna] = fmt(r[chave])  # o número, exatamente como arquivado
+            if pol is not None:  # coluna ao lado: subiu ou caiu contra o mesmo período do ano anterior
+                linha[coluna + " YoY"], css[coluna + " YoY"] = _celula_yoy(r.get(chave + "_dir"), pol, com_palavra=False)
         linha["Bonds na base"], linha["Observações"] = bonds_por_emissor.get(m["Emissor"], np.nan), obs
         linhas.append(linha)
         estilos.append(css)
@@ -127,6 +132,8 @@ FORMATO_GERAL = {
     "Documento": st.column_config.LinkColumn("Documento (SEC)", display_text="Abrir ↗"),
     "Período": st.column_config.DateColumn("Período", format="DD/MM/YYYY"),
     "Bonds na base": st.column_config.NumberColumn(format="%d"),
+    **{c + " YoY": st.column_config.TextColumn("YoY", width="small", help="Contra o mesmo período do ano anterior")
+       for c, (_, pol) in COLUNAS_GERAL.items() if pol is not None},
 }
 
 aba_geral, aba_detalhe = st.tabs(["📋 Visão geral", "🔎 Demonstrações do emissor"])
@@ -137,8 +144,9 @@ with aba_geral:
     st.caption(
         "Valores do último 10-Q (resultado dos **3 meses** do trimestre) ou 10-K (**ano fiscal**), conforme o "
         "mais recente; caixa, ativo e patrimônio são do fim do período. **Caixa operacional** é o acumulado do "
-        "ano (ex.: 6M YTD) — o 10-Q não traz o trimestre isolado. ▲▼ = comparação com o mesmo período do ano "
-        "anterior (verde = favorável ao crédito, vermelho = desfavorável, cinza = neutro). Banco/financeira: "
+        "ano (ex.: 6M YTD) — o 10-Q não traz o trimestre isolado. A coluna **YoY** ao lado de cada número mostra "
+        "se subiu (▲) ou caiu (▼) contra o mesmo período do ano anterior (verde = favorável ao crédito, "
+        "vermelho = desfavorável). Banco/financeira: "
         "a receita é líquida de juros pagos. 'Abrir ↗' leva ao arquivamento no EDGAR."
     )
     with st.container(border=True):
@@ -195,10 +203,12 @@ LEGENDA = {
     ),
     "anual": "Full-year figures of each 10-K; balance sheet at the fiscal year-end.",
 }
+COL_YOY = "YoY"
 SETAS_LEGENDA = (
-    "**▲▼** = higher / lower than the same period one year earlier (▬ = within 1%); the two filed numbers are "
-    "just compared, nothing is calculated. **Green** = favorable for a bondholder (e.g. more operating cash, less debt, "
-    "less interest), **red** = unfavorable, **gray** = neutral/context (capex, issuance, repayments, dividends...)."
+    "**Latest vs year ago** = whether the most recent column is higher (▲), lower (▼) or flat (▬, within 1%) than the "
+    "same period one year earlier — the two filed numbers are just compared, nothing is calculated. **Green** = "
+    "favorable for a bondholder (e.g. more operating cash, less debt, less interest), **red** = unfavorable, "
+    "**gray** = neutral/context (capex, issuance, repayments, dividends...)."
 )
 
 
@@ -245,19 +255,21 @@ def _grafico_caixa(t, visao):
 def _mostrar_tabela(t):
     texto, dirs, pol = t["texto"], t["direcao"], t["polaridade"]
     periodos = list(texto.columns[3:])
+    # os números ficam exatamente como arquivados; a coluna ao lado do período mais recente diz se
+    # subiu ou caiu contra o mesmo período do ano anterior
     exibido = texto.copy()
     css = pd.DataFrame("", index=texto.index, columns=texto.columns)
+    exibido[COL_YOY], css[COL_YOY] = "", ""
     for i in range(len(texto)):
-        for c in periodos:
-            novo, estilo = _com_setas(texto.at[i, c], dirs.at[i, c], pol[i])
-            exibido.at[i, c], css.at[i, c] = novo, estilo
-    ordem = ["Statement", "Line item", *periodos, "XBRL tag"]
+        exibido.at[i, COL_YOY], css.at[i, COL_YOY] = _celula_yoy(dirs.at[i, periodos[0]], pol[i])
+    ordem = ["Statement", "Line item", periodos[0], COL_YOY, *periodos[1:], "XBRL tag"]
     exibido, css = exibido[ordem], css[ordem]
     st.dataframe(
         exibido.style.apply(lambda _: css, axis=None), width="stretch", hide_index=True, placeholder="n/a",
         height=min(36 * (len(exibido) + 1) + 3, 900),
-        column_config={"Statement": st.column_config.TextColumn(width="small"),
-                       "Line item": st.column_config.TextColumn(width="large", pinned=True)},
+        column_config={"Statement": st.column_config.TextColumn(width="medium"),
+                       "Line item": st.column_config.TextColumn(width="large", pinned=True),
+                       COL_YOY: st.column_config.TextColumn("Latest vs year ago", width="small")},
     )
 
 
