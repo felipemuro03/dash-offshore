@@ -236,6 +236,52 @@ def ltm(fatos, tags, fim):
     return np.nan, None
 
 
+def trimestre(fatos, tags, fim):
+    """Valor do trimestre isolado (3 meses terminando em `fim`), como nos releases: o fato de
+    3 meses quando existe; senao acumulado do ano menos o acumulado do trimestre anterior (o
+    4o trimestre sai do anual menos 9 meses). Retorna (valor, tag_usada)."""
+    anteriores = [d for d in fatos.fins_ano_fiscal if d < fim - pd.Timedelta(days=20)]
+    if not anteriores:
+        return np.nan, None
+    inicio_ano = max(anteriores) + pd.Timedelta(days=1)
+    for tag in tags:
+        df = fatos.tabela(tag, False)
+        if df is None:
+            continue
+        direto = df[((df["end"] - fim).abs() <= TOL) & df["dias"].between(80, 100)]
+        if not direto.empty:
+            return float(direto.iloc[-1]["val"]), tag
+        atual = _valor_ytd(df, fim, inicio_ano, dur_max=380)
+        if atual is None:
+            continue
+        ytd, dur = atual
+        if dur <= 100:
+            return ytd, tag
+        anterior = df[((df["start"] - inicio_ano).abs() <= pd.Timedelta(days=8))
+                      & df["end"].between(fim - pd.Timedelta(days=110), fim - pd.Timedelta(days=70))]
+        if anterior.empty:
+            continue
+        return ytd - float(anterior.sort_values("dias").iloc[-1]["val"]), tag
+    return np.nan, None
+
+
+def _juros_tri(fatos, fim):
+    valor, _ = trimestre(fatos, JUROS_DESPESA, fim)
+    if pd.notna(valor) and valor > 0:
+        return valor
+    valor, _ = trimestre(fatos, JUROS_LIQUIDOS, fim)
+    return -valor if pd.notna(valor) and valor < 0 else np.nan
+
+
+def _depreciacao_tri(fatos, fim):
+    valor, _ = trimestre(fatos, DEPRECIACAO_TOTAL, fim)
+    if pd.notna(valor):
+        return valor
+    dep, _ = trimestre(fatos, ["Depreciation"], fim)
+    amort, _ = trimestre(fatos, ["AmortizationOfIntangibleAssets"], fim)
+    return dep + amort if pd.notna(dep) and pd.notna(amort) else dep
+
+
 def instante(fatos, tags, fim, defasagem_dias=0):
     """Foto de balanco em `fim` (1o candidato com dado); devolve (valor, data_base)."""
     for tag in tags:
@@ -373,9 +419,13 @@ def calcular_metricas_bruto(cik, financeira=None, n_periodos=10):
             for chave in ("ativo_total", "patrimonio_liquido", "depositos"):
                 r[chave], _ = instante(fatos, INSTANTES[chave], fim)
             r["divida_bruta"], r["regra_divida"] = _divida_em(fatos, fim)
+            for nome, tags in {**FLUXOS_FINANCEIRA, "lucro_liquido": FLUXOS["lucro_liquido"]}.items():
+                r[f"tri_{nome}"], _ = trimestre(fatos, tags, fim)
         else:
             for nome, tags in FLUXOS.items():
                 r[nome], _ = ltm(fatos, tags, fim)
+                r[f"tri_{nome}"], _ = trimestre(fatos, tags, fim)
+            r["tri_juros"], r["tri_depreciacao"] = _juros_tri(fatos, fim), _depreciacao_tri(fatos, fim)
             r["juros"], r["juros_fonte"] = _juros(fatos, fim)
             r["juros_liquidos_sinal"], _ = ltm(fatos, JUROS_LIQUIDOS, fim)
             r["depreciacao"], r["depreciacao_fonte"] = _depreciacao(fatos, fim)

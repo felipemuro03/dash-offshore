@@ -67,15 +67,16 @@ if erros:
 
 
 def _calcular(cik, perfil_alavancagem="Padrão"):
-    """(indicadores, sinais, perfil SEC, tipo, aviso de defasagem) de uma empresa."""
+    """(indicadores, sinais, perfil SEC, tipo, aviso de defasagem, demonstrativo trimestral) de uma empresa."""
     bruto, perfil = resultados[cik] if cik in resultados else sec_edgar.calcular_metricas(cik)
     if bruto.empty:
         return None
     aviso = ce.aviso_defasagem(perfil, bruto)
+    tri = ce.formatar_demonstrativo(ce.demonstrativo_trimestral(bruto, perfil["financeira"]))
     if perfil["financeira"]:
-        return ce.indicadores_financeira(bruto), None, perfil, "fin", aviso
+        return ce.indicadores_financeira(bruto), None, perfil, "fin", aviso, tri
     ind = ce.indicadores_corporativa(bruto)
-    return ind, ce.semaforo_corporativa(ind.iloc[0], perfil_alavancagem), perfil, "corp", aviso
+    return ind, ce.semaforo_corporativa(ind.iloc[0], perfil_alavancagem), perfil, "corp", aviso, tri
 
 
 calculados = {}
@@ -93,7 +94,7 @@ def _tabela_corporativas():
         r = calculados.get(m["Emissor"])
         if r is None or r[3] != "corp":
             continue
-        ind, sinais, perfil, _, aviso = r
+        ind, sinais, perfil, _, aviso, _ = r
         u = ind.iloc[0]
         observacoes = [t for t in (m["Nota"], aviso) if t]
         linhas.append({
@@ -121,7 +122,7 @@ def _tabela_financeiras():
         r = calculados.get(m["Emissor"])
         if r is None or r[3] != "fin":
             continue
-        ind, _, perfil, _, aviso = r
+        ind, _, perfil, _, aviso, _ = r
         u = ind.iloc[0]
         observacoes = [t for t in (m["Nota"], aviso) if t]
         linhas.append({
@@ -251,7 +252,21 @@ def _grafico_linha(df, coluna, titulo, formato, linhas_ref=None):
     st.plotly_chart(fig, width="stretch")
 
 
-def _detalhe(ind, sinais, perfil, tipo, aviso, perfil_alavancagem):
+def _trimestral(tri):
+    """Numeros do trimestre isolado, em ingles e no formato do earnings release da empresa."""
+    st.markdown("###### Quarterly results — as reported (US$ millions, three months ended)")
+    with st.container(border=True):
+        st.dataframe(tri, width="stretch", placeholder="n/a")
+    st.caption(
+        "Three-month figures from the 10-Q/10-K XBRL (the 4th quarter = full year minus nine months), laid out "
+        "like an earnings release. They tie to the company's release for the standard GAAP lines; non-GAAP "
+        "measures (segment operating income, adjusted EBITDA/EPS) are not in the SEC data. Net Debt = Total Debt "
+        "minus cash (and short-term investments, when tagged); Free Cash Flow = operating cash flow minus capex "
+        "(companies may adjust it, e.g. for insurance recoveries)."
+    )
+
+
+def _detalhe(ind, sinais, perfil, tipo, aviso, perfil_alavancagem, tri):
     if aviso:
         st.warning(aviso)
     u = ind.iloc[0]
@@ -279,6 +294,7 @@ def _detalhe(ind, sinais, perfil, tipo, aviso, perfil_alavancagem):
         for i, (rotulo, valor) in enumerate(cards):
             with colunas[i % 4], st.container(border=True):
                 st.metric(rotulo, valor)
+        _trimestral(tri)
         lim = ce.LIMITES.get(perfil_alavancagem, ce.LIMITES["Padrão"])
         g1, g2 = st.columns(2)
         with g1:
@@ -327,6 +343,7 @@ def _detalhe(ind, sinais, perfil, tipo, aviso, perfil_alavancagem):
         for i, (rotulo, valor) in enumerate(cards):
             with colunas[i % 4], st.container(border=True):
                 st.metric(rotulo, valor)
+        _trimestral(tri)
         g1, g2 = st.columns(2)
         with g1:
             _grafico_linha(ind, "PL/Ativo", "Patrimônio líquido / Ativo", ".1%")
@@ -356,7 +373,7 @@ with aba_detalhe:
         st.header(escolha)
         if m["Nota"]:
             st.info(m["Nota"])
-        _detalhe(r[0], r[1], r[2], r[3], r[4], m["Perfil de alavancagem"])
+        _detalhe(r[0], r[1], r[2], r[3], r[4], m["Perfil de alavancagem"], r[5])
         if escolha in cusips_por_emissor:
             st.markdown("###### Bonds na base")
             with st.container(border=True):
@@ -378,4 +395,4 @@ with aba_detalhe:
                     st.warning("Sem fatos us-gaap pra essa empresa.")
                 else:
                     st.subheader(nome_escolhido)
-                    _detalhe(extra[0], extra[1], extra[2], extra[3], extra[4], "Padrão")
+                    _detalhe(extra[0], extra[1], extra[2], extra[3], extra[4], "Padrão", extra[5])

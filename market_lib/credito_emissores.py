@@ -106,6 +106,78 @@ def indicadores_financeira(bruto):
     })
 
 
+def demonstrativo_trimestral(bruto, financeira=False, n_trimestres=6):
+    """Numeros do TRIMESTRE isolado (3 meses), no formato e nos nomes de um earnings release
+    (US$ milhoes). Linhas = itens; colunas = trimestres (mais recente primeiro) + variacao
+    contra o mesmo trimestre do ano anterior. Saldos (caixa, divida) sao do fim do trimestre."""
+    d = bruto
+    ind = indicadores_financeira(d) if financeira else indicadores_corporativa(d)
+    if financeira:
+        linhas = {
+            "Net Revenue (net of interest expense)": _col(d, "tri_receita_liquida"),
+            "Provision for Credit Losses": _col(d, "tri_provisao"),
+            "Non-Interest Expense": _col(d, "tri_despesa_nao_juros"),
+            "Net Income (Loss)": _col(d, "tri_lucro_liquido"),
+            "Total Assets": ind["Ativo total"],
+            "Total Equity": ind["Patrimônio líquido"],
+            "Total Debt": ind["Dívida (LP + CP)"],
+        }
+    else:
+        fco, capex = _col(d, "tri_fco"), _col(d, "tri_capex")
+        # divida carregada de uma data anterior (a empresa so tagueia no 10-K) nao entra aqui:
+        # numa tabela estilo release o saldo tem que ser do proprio fim do trimestre
+        propria = ind["Data-base da dívida"].isna() | (ind["Data-base da dívida"] == ind["Fim do período"])
+        divida, divida_liq = ind["Dívida bruta"].where(propria), ind["Dívida líquida"].where(propria)
+        linhas = {
+            "Net Sales": _col(d, "tri_receita"),
+            "Operating Income (Loss)": _col(d, "tri_resultado_operacional"),
+            "Income (Loss) before Income Taxes": _col(d, "tri_lucro_antes_ir"),
+            "Net Income (Loss)": _col(d, "tri_lucro_liquido"),
+            "Interest Expense": _col(d, "tri_juros"),
+            "Depreciation and Amortization": _col(d, "tri_depreciacao"),
+            "Cash Flows from Operating Activities": fco,
+            "Capital Expenditures": capex,
+            "Free Cash Flow (CFO − Capex)": fco - capex,
+            "Cash and Cash Equivalents (incl. ST investments)": ind["Caixa e aplicações"],
+            "Total Debt": divida,
+            "Net Debt": divida_liq,
+        }
+    tabela = pd.DataFrame({nome: serie.to_numpy() for nome, serie in linhas.items()},
+                          index=pd.to_datetime(d["Fim do período"])).T / 1e6
+    tabela = tabela.dropna(how="all")
+    if "Operating Income (Loss)" in tabela.index and tabela.loc["Operating Income (Loss)"].isna().all():
+        tabela = tabela.drop("Operating Income (Loss)")
+    tabela = tabela.iloc[:, :n_trimestres]
+    colunas = list(tabela.columns)
+    atual = tabela.iloc[:, 0]
+    antes = next((tabela[c] for c in colunas[1:] if 350 <= (colunas[0] - c).days <= 380), None)
+    tabela.columns = [f"{c:%b %d, %Y}" for c in colunas]
+    if antes is not None:
+        tabela["YoY change ($ mm)"] = atual - antes
+        tabela["YoY change (%)"] = ((atual - antes) / antes).where(antes > 0)  # % so com base positiva
+        # como no release: trimestre atual, variacao, e so depois os trimestres anteriores
+        ordem = list(tabela.columns)
+        tabela = tabela[ordem[:1] + ordem[-2:] + ordem[1:-2]]
+    return tabela
+
+
+def formatar_demonstrativo(tabela):
+    """Texto no estilo do release: milhoes com separador de milhar, negativos entre parenteses."""
+    def mm(v):
+        if pd.isna(v):
+            return "n/a"
+        v = round(v)
+        return f"({abs(v):,.0f})" if v < 0 else f"{v:,.0f}"
+
+    def pct(v):
+        return "" if pd.isna(v) else f"{v:+.1%}"
+
+    texto = tabela.copy().astype(object)
+    for col in tabela.columns:
+        texto[col] = tabela[col].map(pct if "(%)" in col else mm)
+    return texto
+
+
 def _sinal(valor, limites, menor_e_melhor):
     if pd.isna(valor):
         return CINZA
