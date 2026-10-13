@@ -86,11 +86,11 @@ with st.container(border=True):
     st.page_link("pages/5_Oportunidades_Fixed_Income.py", label="Abrir", icon="➡️")
 
 with st.container(border=True):
-    st.markdown("#### 🩺 Crédito — Saúde dos Emissores (EUA)")
+    st.markdown("#### 🩺 Emissores (EUA) — números divulgados")
     st.write(
-        "Busca na SEC as demonstrações (10-K/10-Q) dos emissores dos bonds da base e calcula "
-        "alavancagem, cobertura de juros, liquidez e fluxo de caixa, com um sinal pra ver de "
-        "relance quem está saudável e quem merece atenção."
+        "Demonstrações dos emissores dos bonds da base exatamente como arquivadas na SEC (10-K/10-Q): "
+        "resultado, balanço, dívida e caixa, sem nenhum indicador calculado — cada coluna com o link do "
+        "arquivamento (e dos earnings releases) pra conferir direto na fonte."
     )
     st.page_link("pages/6_Credito_Emissores_EUA.py", label="Abrir", icon="➡️")
 

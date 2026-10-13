@@ -1,51 +1,51 @@
-Emissor,CIK,Registrante SEC,Tipo,Perfil de alavancagem,Nota
-AT&T Inc,732717,AT&T INC.,Auto,Alavancagem estruturalmente alta,
-Alphabet Inc,1652044,Alphabet Inc.,Auto,Padrão,
-American Express Co,4962,AMERICAN EXPRESS CO,Auto,Padrão,
-ArcelorMittal SA,1243429,ArcelorMittal,Estrangeiro (20-F/IFRS),Padrão,Emissor estrangeiro: demonstrações em IFRS (20-F anual) — sem métricas automáticas nesta versão.
-BBVA México,,,Sem dados na SEC,Padrão,Não arquiva na SEC; a controladora BBVA S.A. arquiva 20-F (IFRS).
-Banco BTG Pactual SA,,,Sem dados na SEC,Padrão,Companhia aberta no Brasil — usar a Análise de Crédito do Dash Onshore (dados da CVM).
-Bank of America Corp,70858,BANK OF AMERICA CORP /DE/,Auto,Padrão,
-Bath & Body Works Inc,701985,"Bath & Body Works, Inc.",Auto,Padrão,Patrimônio líquido negativo (recompras) — dívida/capital não se aplica.
-Broadcom Inc,1730168,Broadcom Inc.,Auto,Padrão,
-CVS Health Corp,64803,CVS HEALTH Corp,Auto,Padrão,
-Caesars Entertainment Inc,1590895,"Caesars Entertainment, Inc.",Auto,Padrão,
-Capital One Financial Corp,927628,CAPITAL ONE FINANCIAL CORP,Auto,Padrão,
-Caterpillar Inc,18230,CATERPILLAR INC,Auto,Padrão,Consolidado inclui a Cat Financial. Dívida e juros em tag própria (n/d na API da SEC).
-Citigroup Inc,831001,CITIGROUP INC,Auto,Padrão,
-CrowdStrike Holdings Inc,1535527,"CrowdStrike Holdings, Inc.",Auto,Padrão,
-Dell International LLC / EMC Corp,1571996,Dell Technologies Inc.,Auto,Padrão,Subsidiária da Dell Technologies — usa o consolidado da controladora. PL negativo.
-Ford Motor Co,37996,FORD MOTOR CO,Auto,Padrão,Consolidado inclui a Ford Credit. A dívida está em tag própria da Ford (n/d na API da SEC).
-General Dynamics Corp,40533,GENERAL DYNAMICS CORP,Auto,Padrão,
-General Motors Financial Co,804269,"General Motors Financial Company, Inc.",Auto,Padrão,Braço financeiro da GM (captive finance).
-Goldman Sachs Group Inc,886982,GOLDMAN SACHS GROUP INC,Auto,Padrão,
-Goodyear Tire & Rubber Co,42582,GOODYEAR TIRE & RUBBER CO /OH/,Auto,Padrão,EBITDA contábil muito deprimido por baixas/reestruturação (prejuízo líquido no período): a alavancagem aqui superestima o risco — o EBITDA ajustado divulgado pela empresa é bem maior.
-HCA Inc,860730,"HCA Healthcare, Inc.",Auto,Padrão,Controladora HCA Healthcare. Patrimônio líquido negativo (recompras).
-IBM (International Business Machines),51143,INTERNATIONAL BUSINESS MACHINES CORP,Auto,Padrão,
-JPMorgan Chase & Co,19617,JPMORGAN CHASE & CO,Auto,Padrão,
-JPMorgan Chase Financial Co LLC,19617,JPMORGAN CHASE & CO,Auto,Padrão,Subsidiária da JPMorgan Chase & Co — usa o consolidado da controladora.
-John Deere Capital Corp,27673,DEERE JOHN CAPITAL CORP,Auto,Padrão,Braço financeiro da Deere (captive finance).
-Johnson & Johnson,200406,JOHNSON & JOHNSON,Auto,Padrão,
-Merrill Lynch & Co (Bank of America),70858,BANK OF AMERICA CORP /DE/,Auto,Padrão,Subsidiária do Bank of America — usa o consolidado da controladora.
-MetLife Inc,1099219,METLIFE INC,Auto,Padrão,
-Micron Technology Inc,723125,MICRON TECHNOLOGY INC,Auto,Padrão,
-Morgan Stanley,895421,MORGAN STANLEY,Auto,Padrão,
-NXP BV / NXP Funding LLC / NXP USA Inc,1413447,NXP Semiconductors N.V.,Auto,Padrão,Subsidiárias da NXP Semiconductors — usa o consolidado da controladora.
-NextEra Energy Capital Holdings Inc,753308,NEXTERA ENERGY INC,Auto,Alavancagem estruturalmente alta,Subsidiária (garantida) da NextEra Energy — usa o consolidado do grupo.
-Nike Inc,320187,"NIKE, Inc.",Auto,Padrão,Juros líquidos são receita (caixa líquido) — cobertura de juros não se aplica.
-Oracle Corp,1341439,ORACLE CORP,Auto,Padrão,A dívida só é tagueada no 10-K: nos trimestres mostra o último valor anual com a data-base.
-Pacific Gas & Electric Co,1004980,PG&E Corp,Auto,Alavancagem estruturalmente alta,Utility é subsidiária da PG&E Corp — usa o consolidado da controladora (a utility não tem fatos próprios na API).
-Petróleos Mexicanos (Pemex),932782,MEXICAN PETROLEUM (Pemex),Estrangeiro (20-F/IFRS),Padrão,Emissor estrangeiro: demonstrações em IFRS (20-F anual) — sem métricas automáticas nesta versão.
-RTX Corp,101829,RTX Corp,Auto,Padrão,
-República Federativa do Brasil,,,Soberano,Padrão,"Risco soberano — não há demonstrações na SEC (indicadores fiscais/macro, não balanço)."
-Santander Holdings USA Inc,811830,"Santander Holdings USA, Inc.",Auto,Padrão,Parte das linhas de resultado vem em tag própria da empresa (n/d na API da SEC).
-T-Mobile USA Inc,1283699,"T-Mobile US, Inc.",Auto,Alavancagem estruturalmente alta,Subsidiária da T-Mobile US. A dívida de longo prazo está em tag própria (n/d na API da SEC).
-Teachers Insurance & Annuity Assoc. (TIAA),,,Sem dados na SEC,Padrão,Seguradora mútua — não arquiva demonstrações na SEC.
-Tesouro dos EUA (US Treasury),,,Soberano,Padrão,Risco soberano — não há demonstrações financeiras para analisar.
-Time Warner Cable (atual Charter Communications),1091667,"CHARTER COMMUNICATIONS, INC. /MO/",Auto,Alavancagem estruturalmente alta,Antiga Time Warner Cable — hoje parte da Charter.
-UBS Group AG,1610520,UBS Group AG,Estrangeiro (20-F/IFRS),Padrão,Emissor estrangeiro: demonstrações em IFRS (20-F anual) — sem métricas automáticas nesta versão.
-United Technologies Corp (atual RTX Corp),101829,RTX Corp,Auto,Padrão,Antiga United Technologies — hoje RTX.
-UnitedHealth Group Inc,731766,UNITEDHEALTH GROUP INC,Auto,Padrão,
-Vale Overseas Ltd,917851,Vale S.A.,Estrangeiro (20-F/IFRS),Padrão,"Subsidiária da Vale S.A. (20-F, IFRS) — sem métricas automáticas nesta versão."
-ViacomCBS Inc (atual Paramount),2041610,Paramount Skydance Corporation,Auto,Padrão,Sucessora da Paramount Global após a fusão com a Skydance (ago/2025). Períodos 'predecessor/sucessor' impedem o cálculo de 12 meses: só balanço.
-Wells Fargo & Co,72971,WELLS FARGO & COMPANY/MN,Auto,Padrão,
+Emissor,CIK,Registrante SEC,Tipo,Nota
+AT&T Inc,732717,AT&T INC.,Auto,
+Alphabet Inc,1652044,Alphabet Inc.,Auto,
+American Express Co,4962,AMERICAN EXPRESS CO,Auto,
+ArcelorMittal SA,1243429,ArcelorMittal,Estrangeiro (20-F/IFRS),"Emissor estrangeiro: arquiva 20-F (IFRS, anual) — sem tabelas automáticas; use o link dos arquivamentos."
+BBVA México,,,Sem dados na SEC,Não arquiva na SEC; a controladora BBVA S.A. arquiva 20-F (IFRS).
+Banco BTG Pactual SA,,,Sem dados na SEC,Companhia aberta no Brasil — usar a Análise de Crédito do Dash Onshore (dados da CVM).
+Bank of America Corp,70858,BANK OF AMERICA CORP /DE/,Auto,
+Bath & Body Works Inc,701985,"Bath & Body Works, Inc.",Auto,
+Broadcom Inc,1730168,Broadcom Inc.,Auto,
+CVS Health Corp,64803,CVS HEALTH Corp,Auto,
+Caesars Entertainment Inc,1590895,"Caesars Entertainment, Inc.",Auto,
+Capital One Financial Corp,927628,CAPITAL ONE FINANCIAL CORP,Auto,
+Caterpillar Inc,18230,CATERPILLAR INC,Auto,Consolidado inclui a Cat Financial. Dívida e juros estão em tag própria da empresa — não aparecem aqui; ver o documento no link.
+Citigroup Inc,831001,CITIGROUP INC,Auto,
+CrowdStrike Holdings Inc,1535527,"CrowdStrike Holdings, Inc.",Auto,
+Dell International LLC / EMC Corp,1571996,Dell Technologies Inc.,Auto,Subsidiária da Dell Technologies — mostra o consolidado da controladora.
+Ford Motor Co,37996,FORD MOTOR CO,Auto,Consolidado inclui a Ford Credit. A dívida está em tag própria da Ford — não aparece aqui; ver o documento no link.
+General Dynamics Corp,40533,GENERAL DYNAMICS CORP,Auto,
+General Motors Financial Co,804269,"General Motors Financial Company, Inc.",Auto,Braço financeiro da GM (captive finance).
+Goldman Sachs Group Inc,886982,GOLDMAN SACHS GROUP INC,Auto,
+Goodyear Tire & Rubber Co,42582,GOODYEAR TIRE & RUBBER CO /OH/,Auto,"A Goodyear não divulga EBITDA: usa 'Segment Operating Income', que está no earnings release (link no detalhe)."
+HCA Inc,860730,"HCA Healthcare, Inc.",Auto,Controladora HCA Healthcare.
+IBM (International Business Machines),51143,INTERNATIONAL BUSINESS MACHINES CORP,Auto,
+JPMorgan Chase & Co,19617,JPMORGAN CHASE & CO,Auto,
+JPMorgan Chase Financial Co LLC,19617,JPMORGAN CHASE & CO,Auto,Subsidiária da JPMorgan Chase & Co — usa o consolidado da controladora.
+John Deere Capital Corp,27673,DEERE JOHN CAPITAL CORP,Auto,Braço financeiro da Deere (captive finance).
+Johnson & Johnson,200406,JOHNSON & JOHNSON,Auto,
+Merrill Lynch & Co (Bank of America),70858,BANK OF AMERICA CORP /DE/,Auto,Subsidiária do Bank of America — usa o consolidado da controladora.
+MetLife Inc,1099219,METLIFE INC,Auto,
+Micron Technology Inc,723125,MICRON TECHNOLOGY INC,Auto,
+Morgan Stanley,895421,MORGAN STANLEY,Auto,
+NXP BV / NXP Funding LLC / NXP USA Inc,1413447,NXP Semiconductors N.V.,Auto,Subsidiárias da NXP Semiconductors — usa o consolidado da controladora.
+NextEra Energy Capital Holdings Inc,753308,NEXTERA ENERGY INC,Auto,Subsidiária (garantida) da NextEra Energy — usa o consolidado do grupo.
+Nike Inc,320187,"NIKE, Inc.",Auto,
+Oracle Corp,1341439,ORACLE CORP,Auto,A dívida só é tagueada no 10-K (anual): nas visões trimestrais aparece n/a — veja o 10-Q no link.
+Pacific Gas & Electric Co,1004980,PG&E Corp,Auto,Utility é subsidiária da PG&E Corp — usa o consolidado da controladora (a utility não tem fatos próprios na API).
+Petróleos Mexicanos (Pemex),932782,MEXICAN PETROLEUM (Pemex),Estrangeiro (20-F/IFRS),"Emissor estrangeiro: arquiva 20-F (IFRS, anual) — sem tabelas automáticas; use o link dos arquivamentos."
+RTX Corp,101829,RTX Corp,Auto,
+República Federativa do Brasil,,,Soberano,"Risco soberano — não há demonstrações na SEC (indicadores fiscais/macro, não balanço)."
+Santander Holdings USA Inc,811830,"Santander Holdings USA, Inc.",Auto,Parte das linhas de resultado está em tag própria da empresa — n/a aqui.
+T-Mobile USA Inc,1283699,"T-Mobile US, Inc.",Auto,Subsidiária da T-Mobile US. A dívida de longo prazo está em tag própria — não aparece aqui.
+Teachers Insurance & Annuity Assoc. (TIAA),,,Sem dados na SEC,Seguradora mútua — não arquiva demonstrações na SEC.
+Tesouro dos EUA (US Treasury),,,Soberano,Risco soberano — não há demonstrações financeiras para analisar.
+Time Warner Cable (atual Charter Communications),1091667,"CHARTER COMMUNICATIONS, INC. /MO/",Auto,Antiga Time Warner Cable — hoje parte da Charter.
+UBS Group AG,1610520,UBS Group AG,Estrangeiro (20-F/IFRS),"Emissor estrangeiro: arquiva 20-F (IFRS, anual) — sem tabelas automáticas; use o link dos arquivamentos."
+United Technologies Corp (atual RTX Corp),101829,RTX Corp,Auto,Antiga United Technologies — hoje RTX.
+UnitedHealth Group Inc,731766,UNITEDHEALTH GROUP INC,Auto,
+Vale Overseas Ltd,917851,Vale S.A.,Estrangeiro (20-F/IFRS),"Subsidiária da Vale S.A. (20-F, IFRS, anual) — sem tabelas automáticas; use o link dos arquivamentos."
+ViacomCBS Inc (atual Paramount),2041610,Paramount Skydance Corporation,Auto,Sucessora da Paramount Global após a fusão com a Skydance (ago/2025): períodos 'predecessor/sucessor' — algumas colunas podem vir vazias.
+Wells Fargo & Co,72971,WELLS FARGO & COMPANY/MN,Auto,
