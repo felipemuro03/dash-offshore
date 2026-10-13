@@ -3,6 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
 
 RAIZ_PROJETO = Path(__file__).resolve().parents[1]
@@ -10,7 +11,7 @@ if str(RAIZ_PROJETO) not in sys.path:
     sys.path.insert(0, str(RAIZ_PROJETO))
 
 from market_lib import sec_edgar  # noqa: E402
-from market_lib.estilo import aplicar_estilo, mostrar_logo_sidebar  # noqa: E402
+from market_lib.estilo import GOLD, NAVY, aplicar_estilo, mostrar_logo_sidebar  # noqa: E402
 
 st.set_page_config(page_title="Dash Offshore — Emissores (EUA)", layout="wide", page_icon="🩺")
 aplicar_estilo()
@@ -20,10 +21,12 @@ st.title("Emissores (EUA) — números divulgados")
 st.caption(
     "Demonstrações dos emissores dos bonds da base, **exatamente como as empresas arquivaram na SEC** "
     "(10-K e 10-Q, dados XBRL). Nenhum indicador é calculado aqui — só mudamos a unidade pra US$ milhões. "
-    "Cada coluna tem o link do arquivamento de origem pra conferir direto na SEC."
+    "Cada coluna tem o link do arquivamento de origem pra conferir direto na SEC. As setas ▲▼ só comparam "
+    "o número com o do mesmo período do ano anterior."
 )
 
 CAMINHO_MAPA = RAIZ_PROJETO / "data" / "emissores_sec.csv"
+VERDE, VERMELHO, CINZA = "#1b7a3d", "#b3261e", "#7a7a7a"
 
 st.sidebar.header("Opcional")
 arquivo_excel = st.sidebar.file_uploader(
@@ -62,28 +65,62 @@ with st.spinner(f"Buscando as demonstrações de {len(ciks)} empresas na SEC (~3
 if erros:
     st.warning("Não consegui buscar na SEC: " + "; ".join(f"CIK {c} ({e})" for c, e in erros.items()))
 
-
 fmt = sec_edgar.formatar_mm
 
 
+def _seta(d):
+    return "" if d is None or pd.isna(d) else {1: "▲", -1: "▼", 0: "▬"}[int(d)]
+
+
+def _cor(d, polaridade):
+    """Verde = a mudança ajuda o crédito, vermelho = piora, cinza = neutro/contexto ou estável."""
+    if d is None or pd.isna(d) or d == 0 or polaridade is None:
+        return CINZA
+    return VERDE if (d > 0) == polaridade else VERMELHO
+
+
+def _com_setas(valor_txt, d, polaridade):
+    """(texto com seta, css) de uma célula."""
+    seta = _seta(d)
+    if not seta or valor_txt == "n/a":
+        return valor_txt, ""
+    return f"{valor_txt}  {seta}", f"color: {_cor(d, polaridade)}; font-weight: 600"
+
+
+# ---------- Visão geral ----------
+
+# coluna -> (chave no resumo, polaridade: True = subir é bom)
+COLUNAS_GERAL = {
+    "Receita (US$ mm)": ("receita", True), "Lucro líquido (US$ mm)": ("lucro_liquido", True),
+    "Caixa operacional (US$ mm)": ("fco", True), "Caixa (US$ mm)": ("caixa", True),
+    "Ativo total (US$ mm)": ("ativo_total", None), "Patrimônio líquido (US$ mm)": ("patrimonio", True),
+}
+
+
 def _tabela_geral():
-    linhas = []
+    linhas, estilos = [], []
     for _, m in auto.iterrows():
         d = resultados.get(int(m["CIK"]))
         if d is None or d["sem_us_gaap"]:
             continue
         r = d["resumo"]
         obs = " | ".join(t for t in (m["Nota"], d["defasagem"]) if t)
-        linhas.append({
+        linha = {
             "Emissor": m["Emissor"], "Tipo": "Banco / financeira" if d["financeira"] else "Empresa",
             "Documento": sec_edgar.link_arquivamento(d["cik"], r["accn"]), "Form": r["form"],
-            "Período": r["periodo"], "Base": r["base"],
-            "Receita (US$ mm)": fmt(r["receita"]), "Lucro líquido (US$ mm)": fmt(r["lucro_liquido"]),
-            "Caixa (US$ mm)": fmt(r["caixa"]),
-            "Ativo total (US$ mm)": fmt(r["ativo_total"]), "Patrimônio líquido (US$ mm)": fmt(r["patrimonio"]),
-            "Bonds na base": bonds_por_emissor.get(m["Emissor"], np.nan), "Observações": obs,
-        })
-    return pd.DataFrame(linhas).sort_values("Emissor").reset_index(drop=True)
+            "Período": r["periodo"], "Base": r["base"], "Base do caixa op.": r["fco_base"],
+        }
+        css = {}
+        for coluna, (chave, pol) in COLUNAS_GERAL.items():
+            texto, estilo = _com_setas(fmt(r[chave]), r.get(chave + "_dir"), pol)
+            linha[coluna], css[coluna] = texto, estilo
+        linha["Bonds na base"], linha["Observações"] = bonds_por_emissor.get(m["Emissor"], np.nan), obs
+        linhas.append(linha)
+        estilos.append(css)
+    df = pd.DataFrame(linhas)
+    css = pd.DataFrame(estilos).reindex(columns=df.columns).fillna("")
+    ordem = df["Emissor"].argsort().to_numpy()
+    return df.iloc[ordem].reset_index(drop=True), css.iloc[ordem].reset_index(drop=True)
 
 
 FORMATO_GERAL = {
@@ -94,20 +131,21 @@ FORMATO_GERAL = {
 
 aba_geral, aba_detalhe = st.tabs(["📋 Visão geral", "🔎 Demonstrações do emissor"])
 
-# ---------- Visão geral ----------
-
 with aba_geral:
-    geral = _tabela_geral()
+    geral, css_geral = _tabela_geral()
     st.markdown("###### Último arquivamento de cada emissor")
     st.caption(
         "Valores do último 10-Q (resultado dos **3 meses** do trimestre) ou 10-K (**ano fiscal**), conforme o "
-        "mais recente; caixa, ativo e patrimônio são do fim do período. Banco/financeira: a receita é a "
-        "receita líquida de juros pagos. 'Abrir ↗' leva ao arquivamento no EDGAR. Pra ver as linhas completas "
-        "(dívida, juros, fluxo de caixa...), use a aba ao lado."
+        "mais recente; caixa, ativo e patrimônio são do fim do período. **Caixa operacional** é o acumulado do "
+        "ano (ex.: 6M YTD) — o 10-Q não traz o trimestre isolado. ▲▼ = comparação com o mesmo período do ano "
+        "anterior (verde = favorável ao crédito, vermelho = desfavorável, cinza = neutro). Banco/financeira: "
+        "a receita é líquida de juros pagos. 'Abrir ↗' leva ao arquivamento no EDGAR."
     )
     with st.container(border=True):
-        st.dataframe(geral, column_config=FORMATO_GERAL, width="stretch", hide_index=True, height=640,
-                     placeholder="n/a")
+        st.dataframe(
+            geral.style.apply(lambda _: css_geral, axis=None), column_config=FORMATO_GERAL, width="stretch",
+            hide_index=True, height=640, placeholder="n/a",
+        )
 
     sem = mapa[mapa["Tipo"] != "Auto"].copy()
     if not sem.empty:
@@ -139,22 +177,29 @@ with aba_geral:
 # ---------- Demonstrações ----------
 
 VISOES = {
-    "Quarterly (10-Q) — three months ended": "trimestre",
-    "Year-to-date (10-Q) — cumulative": "acumulado",
-    "Annual (10-K) — year ended": "anual",
+    "Cash flow — year-to-date (10-Q)": "caixa_acum",
+    "Cash flow — annual (10-K)": "caixa_anual",
+    "Income statement & balance sheet — quarterly (10-Q)": "trimestre",
+    "Income statement & balance sheet — annual (10-K)": "anual",
 }
 LEGENDA = {
+    "caixa_acum": (
+        "Cumulative cash flow of the year as filed in each 10-Q (3, 6 or 9 months) — the 10-Q does not publish the "
+        "cash flow of the quarter alone. Compare columns of the same length (6M with 6M); the arrows already do. "
+        "'(cash out)' lines are filed as positive numbers and mean cash leaving the company. Interest paid in cash is only tagged in the annual 10-K by most companies; the interest expense line is shown in both."
+    ),
+    "caixa_anual": "Full-year cash flow of each 10-K. '(cash out)' lines are filed as positive numbers and mean cash leaving the company.",
     "trimestre": (
         "Result of the three months of each 10-Q, and the balance sheet at the end of the quarter. The 4th quarter "
-        "is not filed on its own (it is inside the 10-K and the earnings release), and the cash flow statement in a "
-        "10-Q is only cumulative — see the year-to-date view."
-    ),
-    "acumulado": (
-        "Cumulative figures of the year as filed in each 10-Q (3, 6 or 9 months); the cash flow statement is only "
-        "published this way. Balance sheet at the end of the period."
+        "is not filed on its own (it is inside the 10-K and the earnings release)."
     ),
     "anual": "Full-year figures of each 10-K; balance sheet at the fiscal year-end.",
 }
+SETAS_LEGENDA = (
+    "**▲▼** = higher / lower than the same period one year earlier (▬ = within 1%); the two filed numbers are "
+    "just compared, nothing is calculated. **Green** = favorable for a bondholder (e.g. more operating cash, less debt, "
+    "less interest), **red** = unfavorable, **gray** = neutral/context (capex, issuance, repayments, dividends...)."
+)
 
 
 def _links(d, perfil):
@@ -173,6 +218,49 @@ def _links(d, perfil):
         st.markdown(f"**Earnings releases** (8-K item 2.02; the release is the EX-99.1 exhibit in each filing): {releases}")
 
 
+def _grafico_caixa(t, visao):
+    """Barras dos três totais do fluxo de caixa (operacional, investimento, financiamento), como arquivados."""
+    series = [(c, n, cor) for c, n, cor in (("fco", "Operating", NAVY), ("fci", "Investing", GOLD),
+                                              ("fcf_total", "Financing", "#8a8d93")) if c in t["chaves"]]
+    if not series:
+        return
+    colunas = list(t["num"].columns)
+    manter = [k for k in range(len(colunas)) if t["dias"][k] and abs(t["dias"][k] - t["dias"][0]) <= 10]
+    manter = list(reversed(manter))  # mais antigo -> mais recente
+    if len(manter) < 2:
+        return
+    fig = go.Figure()
+    for chave, nome, cor in series:
+        i = t["chaves"].index(chave)
+        fig.add_bar(name=nome, x=[colunas[k] for k in manter], y=[t["num"].iloc[i, k] / 1e6 for k in manter], marker_color=cor,
+                    hovertemplate="%{x}<br>" + nome + ": %{y:,.0f}<extra></extra>")
+    titulo = "Cash flow by activity (US$ mm) — same period of each year, as filed" if visao == "caixa_acum" \
+        else "Cash flow by activity (US$ mm) — by fiscal year, as filed"
+    fig.update_layout(title=titulo, barmode="group", height=320, margin=dict(t=45, b=10, l=10, r=10),
+                      legend=dict(orientation="h", y=-0.15))
+    fig.add_hline(y=0, line_color="#999999", line_width=1)
+    st.plotly_chart(fig, width="stretch")
+
+
+def _mostrar_tabela(t):
+    texto, dirs, pol = t["texto"], t["direcao"], t["polaridade"]
+    periodos = list(texto.columns[3:])
+    exibido = texto.copy()
+    css = pd.DataFrame("", index=texto.index, columns=texto.columns)
+    for i in range(len(texto)):
+        for c in periodos:
+            novo, estilo = _com_setas(texto.at[i, c], dirs.at[i, c], pol[i])
+            exibido.at[i, c], css.at[i, c] = novo, estilo
+    ordem = ["Statement", "Line item", *periodos, "XBRL tag"]
+    exibido, css = exibido[ordem], css[ordem]
+    st.dataframe(
+        exibido.style.apply(lambda _: css, axis=None), width="stretch", hide_index=True, placeholder="n/a",
+        height=min(36 * (len(exibido) + 1) + 3, 900),
+        column_config={"Statement": st.column_config.TextColumn(width="small"),
+                       "Line item": st.column_config.TextColumn(width="large", pinned=True)},
+    )
+
+
 def _detalhe(d, chave):
     perfil = d["perfil"]
     if d["sem_us_gaap"]:
@@ -189,24 +277,24 @@ def _detalhe(d, chave):
 
     escolha = st.radio("View", list(VISOES), horizontal=True, key=f"ce_visao_{chave}")
     visao = VISOES[escolha]
-    tabela, fontes = d["tabelas"][visao], d["fontes"][visao]
-    if tabela.empty:
-        st.info("Sem arquivamento desse tipo nos dados da SEC.")
+    t, fontes = d["tabelas"][visao], d["fontes"][visao]
+    if t is None or t["texto"].empty:
+        st.info("Sem dados dessa visão nos arquivamentos da SEC (a empresa pode usar tags próprias) — "
+                "abra o arquivamento pelos links acima.")
         return
-    colunas = list(tabela.columns[3:])
+    if visao.startswith("caixa"):
+        _grafico_caixa(t, visao)
     st.markdown("###### As filed — US$ millions")
     with st.container(border=True):
-        st.dataframe(
-            tabela[["Line item", *colunas, "Statement", "XBRL tag"]], width="stretch", hide_index=True,
-            placeholder="n/a", height=min(36 * (len(tabela) + 1) + 3, 900),
-            column_config={"Line item": st.column_config.TextColumn(width="large", pinned=True)},
-        )
+        _mostrar_tabela(t)
+    st.caption(SETAS_LEGENDA)
     st.caption(
         LEGENDA[visao] + " **n/a** = the company did not file that line as a standard us-gaap tag for the period "
         "(or does not have it) — open the filing to see it. Debt is shown line by line, exactly as tagged, because "
         "each company breaks it down differently (nothing is added up). 'XBRL tag' is the us-gaap tag the value comes from."
     )
 
+    colunas = list(t["texto"].columns[3:])
     origem = pd.DataFrame({
         "Column": colunas, "Form": fontes["form"].to_numpy(), "Period end": fontes["periodo"].to_numpy(),
         "Filed on": fontes["filed"].to_numpy(),

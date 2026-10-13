@@ -66,15 +66,6 @@ LINHAS_CORPORATIVA = [
       "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments"], FLUXO),
     ("Income statement", "lucro_liquido", "Net income (loss) attributable to the company", ["NetIncomeLoss"], FLUXO),
     ("Income statement", "lucro_com_nci", "Net income (loss) incl. noncontrolling interests", ["ProfitLoss"], FLUXO),
-    ("Cash flow statement", "da", "Depreciation and amortization",
-     ["DepreciationDepletionAndAmortization", "DepreciationAndAmortization",
-      "DepreciationAmortizationAndAccretionNet", "DepreciationNonproduction"], FLUXO),
-    ("Cash flow statement", "fco", "Net cash from operating activities",
-     ["NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"], FLUXO),
-    ("Cash flow statement", "capex", "Capital expenditures (payments for property, plant and equipment)",
-     ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets",
-      "PaymentsForCapitalImprovements"], FLUXO),
-    ("Cash flow statement", "juros_pagos", "Interest paid (cash)", ["InterestPaidNet", "InterestPaid"], FLUXO),
     ("Balance sheet", "caixa", "Cash and cash equivalents", ["CashAndCashEquivalentsAtCarryingValue"], INSTANTE),
     ("Balance sheet", "aplicacoes", "Short-term investments / marketable securities",
      ["ShortTermInvestments", "MarketableSecuritiesCurrent", "AvailableForSaleSecuritiesDebtSecuritiesCurrent"], INSTANTE),
@@ -88,6 +79,66 @@ LINHAS_CORPORATIVA = [
      ["StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"], INSTANTE),
 ]
 
+
+# Fluxo de caixa (as linhas variam por empresa; o que nao existe some da tabela). Valores como
+# arquivados: "Payments..."/"Repayments..." vem POSITIVOS e significam saida de caixa.
+LINHAS_CAIXA = [
+    ("Operating", "lucro_fc", "Net income (loss), as in the cash flow statement", ["ProfitLoss", "NetIncomeLoss"], FLUXO),
+    ("Operating", "da", "Depreciation and amortization",
+     ["DepreciationDepletionAndAmortization", "DepreciationAndAmortization",
+      "DepreciationAmortizationAndAccretionNet", "DepreciationNonproduction"], FLUXO),
+    ("Operating", "sbc", "Share-based compensation", ["ShareBasedCompensation"], FLUXO),
+    ("Operating", "fco", "Net cash from operating activities",
+     ["NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"], FLUXO),
+    ("Investing", "capex", "Capital expenditures (cash out)",
+     ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets",
+      "PaymentsForCapitalImprovements"], FLUXO),
+    ("Investing", "aquisicoes", "Acquisitions of businesses, net of cash (cash out)",
+     ["PaymentsToAcquireBusinessesNetOfCashAcquired"], FLUXO),
+    ("Investing", "venda_ativos", "Proceeds from sale of property, plant and equipment",
+     ["ProceedsFromSaleOfPropertyPlantAndEquipment"], FLUXO),
+    ("Investing", "venda_negocios", "Proceeds from divestitures of businesses",
+     ["ProceedsFromDivestitureOfBusinesses"], FLUXO),
+    ("Investing", "fci", "Net cash from investing activities",
+     ["NetCashProvidedByUsedInInvestingActivities", "NetCashProvidedByUsedInInvestingActivitiesContinuingOperations"], FLUXO),
+    ("Financing", "emissao_lp", "Proceeds from issuance of long-term debt",
+     ["ProceedsFromIssuanceOfLongTermDebt", "ProceedsFromIssuanceOfDebt", "ProceedsFromIssuanceOfSeniorLongTermDebt",
+      "ProceedsFromIssuanceOfOtherLongTermDebt", "ProceedsFromNotesPayable"], FLUXO),
+    ("Financing", "pagamento_lp", "Repayments of long-term debt (cash out)",
+     ["RepaymentsOfLongTermDebt", "RepaymentsOfDebt", "RepaymentsOfSeniorDebt", "RepaymentsOfNotesPayable",
+      "RepaymentsOfOtherDebt"], FLUXO),
+    ("Financing", "revolver_entrada", "Borrowings under lines of credit", ["ProceedsFromLongTermLinesOfCredit"], FLUXO),
+    ("Financing", "revolver_saida", "Repayments of lines of credit (cash out)", ["RepaymentsOfLongTermLinesOfCredit"], FLUXO),
+    ("Financing", "cp_liquido", "Short-term debt, net (borrowings − repayments)", ["ProceedsFromRepaymentsOfShortTermDebt", "ProceedsFromRepaymentsOfDebt"], FLUXO),
+    ("Financing", "cp_entrada", "Proceeds from short-term debt", ["ProceedsFromShortTermDebt"], FLUXO),
+    ("Financing", "cp_saida", "Repayments of short-term debt (cash out)", ["RepaymentsOfShortTermDebt"], FLUXO),
+    ("Financing", "papel_comercial", "Commercial paper, net", ["ProceedsFromRepaymentsOfCommercialPaper"], FLUXO),
+    ("Financing", "dividendos", "Dividends paid (cash out)", ["PaymentsOfDividends", "PaymentsOfDividendsCommonStock"], FLUXO),
+    ("Financing", "recompra", "Repurchases of common stock (cash out)", ["PaymentsForRepurchaseOfCommonStock"], FLUXO),
+    ("Financing", "fcf_total", "Net cash from financing activities",
+     ["NetCashProvidedByUsedInFinancingActivities", "NetCashProvidedByUsedInFinancingActivitiesContinuingOperations"], FLUXO),
+    ("Supplemental", "juros_despesa", "Interest expense (income statement)",
+     ["InterestExpenseNonoperating", "InterestExpense", "InterestExpenseDebt", "InterestAndDebtExpense",
+      "InterestExpenseLongTermDebt"], FLUXO),
+    ("Supplemental", "juros_pagos", "Interest paid (cash out)", ["InterestPaidNet", "InterestPaid"], FLUXO),
+    ("Supplemental", "impostos_pagos", "Income taxes paid (cash out)", ["IncomeTaxesPaidNet", "IncomeTaxesPaid"], FLUXO),
+    ("Supplemental", "variacao_caixa", "Net change in cash, equivalents and restricted cash",
+     ["CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseIncludingExchangeRateEffect",
+      "CashAndCashEquivalentsPeriodIncreaseDecrease"], FLUXO),
+    ("Supplemental", "caixa_fim", "Cash, equivalents and restricted cash, end of period",
+     ["CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"], INSTANTE),
+]
+
+# Como a mudanca ajuda ou piora o credito (so colore a seta; None = neutro/contexto).
+# True = subir e favoravel, False = subir e desfavoravel.
+POLARIDADE = {
+    "receita": True, "resultado_operacional": True, "lucro_antes_ir": True, "lucro_liquido": True,
+    "lucro_com_nci": True, "lucro_fc": True, "fco": True, "caixa": True, "caixa_bancos": True, "aplicacoes": True,
+    "patrimonio": True, "patrimonio_nci": True, "variacao_caixa": True, "caixa_fim": True, "depositos": True,
+    "juros": False, "juros_despesa": False, "juros_pagos": False, "passivo_total": False, "provisao": False,
+    **{f"divida_{tag}": False for tag, _ in _DIVIDA},
+}
+
 LINHAS_FINANCEIRA = [
     ("Income statement", "receita", "Net revenue (net of interest expense)", ["RevenuesNetOfInterestExpense", "Revenues"], FLUXO),
     ("Income statement", "juros", "Interest expense", ["InterestExpense", "InterestExpenseNonoperating"], FLUXO),
@@ -100,8 +151,6 @@ LINHAS_FINANCEIRA = [
       "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments"], FLUXO),
     ("Income statement", "lucro_liquido", "Net income (loss) attributable to the company", ["NetIncomeLoss"], FLUXO),
     ("Income statement", "lucro_com_nci", "Net income (loss) incl. noncontrolling interests", ["ProfitLoss"], FLUXO),
-    ("Cash flow statement", "fco", "Net cash from operating activities",
-     ["NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"], FLUXO),
     ("Balance sheet", "caixa", "Cash and cash equivalents", ["CashAndCashEquivalentsAtCarryingValue"], INSTANTE),
     ("Balance sheet", "caixa_bancos", "Cash and due from banks", ["CashAndDueFromBanks"], INSTANTE),
     ("Balance sheet", "ativo_total", "Total assets", ["Assets"], INSTANTE),
@@ -113,15 +162,17 @@ LINHAS_FINANCEIRA = [
      ["StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"], INSTANTE),
 ]
 
-# o 10-Q so publica fluxo de caixa acumulado no ano — nao ha "3 meses" (so no Q1, que e igual ao acumulado)
-SO_ACUMULADO = {"fco", "capex", "juros_pagos"}
-
-# visoes: (formulario do arquivamento, n de colunas, duracao minima/maxima em dias do fato de fluxo)
+# visoes: nome -> (formulario do arquivamento, n de colunas, duracao min/max em dias do fato de fluxo,
+# demonstracoes incluidas). O fluxo de caixa do 10-Q so existe ACUMULADO no ano (3, 6 ou 9 meses).
+SEC_RESULTADO_BALANCO = ("Income statement", "Balance sheet")
+SEC_CAIXA = ("Operating", "Investing", "Financing", "Supplemental")
 VISOES = {
-    "trimestre": ("10-Q", 8, 80, 100),   # 3 meses
-    "acumulado": ("10-Q", 6, 80, 290),   # acumulado do ano (3, 6 ou 9 meses): o mais longo
-    "anual": ("10-K", 5, 350, 380),
+    "trimestre": ("10-Q", 8, 80, 100, SEC_RESULTADO_BALANCO),   # resultado de 3 meses + balanco
+    "anual": ("10-K", 5, 350, 380, SEC_RESULTADO_BALANCO),
+    "caixa_acum": ("10-Q", 8, 80, 290, SEC_CAIXA),               # acumulado do ano (o mais longo)
+    "caixa_anual": ("10-K", 5, 350, 380, SEC_CAIXA),
 }
+TOLERANCIA_IGUAL = 0.01  # variacao < 1% do maior valor = "estavel" (sem seta de alta/baixa)
 
 
 def _user_agent():
@@ -218,9 +269,12 @@ def formatar_mm(v):
 def _montar_tabela(usgaap, filings, visao, linhas):
     """Tabela de uma visao: linhas = itens, colunas = arquivamentos (mais recente primeiro).
     So le fatos DO PROPRIO arquivamento (mesmo numero de acesso). Em cada linha, a tag de cada
-    coluna e a 1a candidata com dado nele; a coluna "XBRL tag" lista as usadas. Devolve (DataFrame de texto,
-    {chave: valor bruto da 1a coluna})."""
-    _, _, dmin, dmax = VISOES[visao]
+    coluna e a 1a candidata com dado nele; a coluna "XBRL tag" lista as usadas.
+
+    Devolve dict: texto (DataFrame exibido), num (valores em dolares, mesmas linhas/colunas),
+    direcao (+1 subiu / -1 caiu / 0 estavel / NaN sem comparacao, contra o MESMO periodo do ano
+    anterior — so uma seta, nenhuma conta e exibida), chaves, polaridade (por linha) e dias."""
+    _, _, dmin, dmax, secoes = VISOES[visao]
     accns = set(filings["accn"])
     cache = {}
 
@@ -253,9 +307,13 @@ def _montar_tabela(usgaap, filings, visao, linhas):
         return float(linha["val"]), int(linha["dias"])
 
     quadros = list(filings.itertuples())
-    saida, brutos, dias_col = [], {}, [0] * len(quadros)
+    periodos = [f.periodo for f in quadros]
+    # coluna do MESMO periodo um ano antes (so ela serve de comparacao: 3M com 3M, 6M com 6M...)
+    ano_anterior = [next((k for k in range(i + 1, len(periodos)) if 350 <= (periodos[i] - periodos[k]).days <= 380), None)
+                    for i in range(len(periodos))]
+    saida, dias_col = [], [0] * len(quadros)
     for secao, chave, rotulo, tags, tipo in linhas:
-        if visao == "trimestre" and chave in SO_ACUMULADO:
+        if secao not in secoes:
             continue
         vals, usadas = [], []
         for f in quadros:
@@ -272,35 +330,58 @@ def _montar_tabela(usgaap, filings, visao, linhas):
         for i, v in enumerate(vals):
             if v is not None and v[1]:
                 dias_col[i] = max(dias_col[i], v[1])
-        brutos[chave] = vals[0][0] if vals and vals[0] is not None else None
-        saida.append({"Statement": secao, "Line item": rotulo,
-                      "XBRL tag": " / ".join(sorted(usadas, key=tags.index)),
-                      "_valores": [None if v is None else v[0] for v in vals]})
-    if visao == "acumulado":
+        saida.append({"secao": secao, "chave": chave, "rotulo": rotulo,
+                      "tag": " / ".join(sorted(usadas, key=tags.index)),
+                      "valores": [None if v is None else v[0] for v in vals]})
+
+    if visao == "caixa_acum":
         rotulos = [f"{round(d / 30.44)}M to {f.periodo:%b %d, %Y}" if d else f"{f.periodo:%b %d, %Y}"
                    for f, d in zip(quadros, dias_col)]
     else:
         rotulos = [f"{f.periodo:%b %d, %Y}" for f in quadros]
-    linhas_txt = [{k: v for k, v in r.items() if k != "_valores"} | dict(zip(rotulos, map(formatar_mm, r["_valores"])))
-                  for r in saida]
-    return pd.DataFrame(linhas_txt), brutos
+
+    def direcao(atual, antes):
+        if atual is None or antes is None:
+            return float("nan")
+        dif = atual - antes
+        return 0.0 if abs(dif) <= TOLERANCIA_IGUAL * max(abs(atual), abs(antes)) else (1.0 if dif > 0 else -1.0)
+
+    texto = pd.DataFrame([
+        {"Statement": r["secao"], "Line item": r["rotulo"], "XBRL tag": r["tag"],
+         **dict(zip(rotulos, map(formatar_mm, r["valores"])))} for r in saida
+    ])
+    num = pd.DataFrame([dict(zip(rotulos, [float("nan") if v is None else v for v in r["valores"]])) for r in saida])
+    dirs = pd.DataFrame([
+        dict(zip(rotulos, [direcao(r["valores"][i], None if ano_anterior[i] is None else r["valores"][ano_anterior[i]])
+                           for i in range(len(quadros))])) for r in saida
+    ])
+    return {"texto": texto, "num": num, "direcao": dirs, "chaves": [r["chave"] for r in saida],
+            "polaridade": [POLARIDADE.get(r["chave"]) for r in saida], "dias": dias_col}
 
 
-def _primeiro(brutos, *chaves):
-    return next((brutos[c] for c in chaves if brutos.get(c) is not None), None)
+def _valor_coluna0(tabela, *chaves):
+    """(valor, direcao) da coluna mais recente da 1a chave que existe nela."""
+    for chave in chaves:
+        if chave in tabela["chaves"]:
+            i = tabela["chaves"].index(chave)
+            v = tabela["num"].iloc[i, 0]
+            if pd.notna(v):
+                d = tabela["direcao"].iloc[i, 0]
+                return float(v), (None if pd.isna(d) else int(d))
+    return None, None
 
 
 def _tabelas_empresa(usgaap, arquivos, financeira):
-    linhas = LINHAS_FINANCEIRA if financeira else LINHAS_CORPORATIVA
-    tabelas, brutos, fontes = {}, {}, {}
-    for visao, (form, n, _, _) in VISOES.items():
+    linhas = [*(LINHAS_FINANCEIRA if financeira else LINHAS_CORPORATIVA), *LINHAS_CAIXA]
+    tabelas, fontes = {}, {}
+    for visao, (form, n, _, _, _) in VISOES.items():
         filings = arquivos[arquivos["form"] == form].head(n).reset_index(drop=True)
         if filings.empty:
-            tabelas[visao], brutos[visao], fontes[visao] = pd.DataFrame(), {}, pd.DataFrame()
+            tabelas[visao], fontes[visao] = None, pd.DataFrame()
             continue
-        tabelas[visao], brutos[visao] = _montar_tabela(usgaap, filings, visao, linhas)
+        tabelas[visao] = _montar_tabela(usgaap, filings, visao, linhas)
         fontes[visao] = filings
-    return tabelas, brutos, fontes
+    return tabelas, fontes
 
 
 def carregar_empresa_bruto(cik):
@@ -313,19 +394,29 @@ def carregar_empresa_bruto(cik):
     arquivos = _arquivamentos(usgaap) if usgaap else pd.DataFrame()
     if arquivos.empty:
         return {**base, "sem_us_gaap": True, "tabelas": {}, "fontes": {}, "resumo": None, "defasagem": None}
-    tabelas, brutos, fontes = _tabelas_empresa(usgaap, arquivos, financeira)
+    tabelas, fontes = _tabelas_empresa(usgaap, arquivos, financeira)
 
     ultimo = arquivos.iloc[0]
-    visao_resumo = "trimestre" if ultimo["form"] == "10-Q" else "anual"
-    b = brutos.get(visao_resumo, {})
+    dez_q = ultimo["form"] == "10-Q"
+    t = tabelas["trimestre" if dez_q else "anual"]
+    caixa = tabelas["caixa_acum" if dez_q else "caixa_anual"]
+    vals = {}
+    if t:
+        for chave, alternativas in {"receita": ("receita",), "lucro_liquido": ("lucro_liquido", "lucro_com_nci"),
+                                    "caixa": ("caixa", "caixa_bancos"), "ativo_total": ("ativo_total",),
+                                    "patrimonio": ("patrimonio", "patrimonio_nci")}.items():
+            # se a empresa nao tagueia a linha principal, usa a equivalente do mesmo demonstrativo
+            vals[chave], vals[chave + "_dir"] = _valor_coluna0(t, *alternativas)
+    fco, fco_dir = _valor_coluna0(caixa, "fco") if caixa else (None, None)
+    meses = round(caixa["dias"][0] / 30.44) if caixa and caixa["dias"][0] else None
     resumo = {
         "form": ultimo["form"], "periodo": ultimo["periodo"], "accn": ultimo["accn"],
-        "base": "3 months" if visao_resumo == "trimestre" else "Fiscal year",
-        "receita": b.get("receita"),
-        # se a empresa nao tagueia a linha principal, usa a equivalente do mesmo demonstrativo
-        "lucro_liquido": _primeiro(b, "lucro_liquido", "lucro_com_nci"),
-        "caixa": _primeiro(b, "caixa", "caixa_bancos"),
-        "ativo_total": b.get("ativo_total"), "patrimonio": _primeiro(b, "patrimonio", "patrimonio_nci"),
+        "base": "3 months" if dez_q else "Fiscal year",
+        "receita": vals.get("receita"), "lucro_liquido": vals.get("lucro_liquido"), "caixa": vals.get("caixa"),
+        "ativo_total": vals.get("ativo_total"), "patrimonio": vals.get("patrimonio"),
+        "receita_dir": vals.get("receita_dir"), "lucro_liquido_dir": vals.get("lucro_liquido_dir"),
+        "caixa_dir": vals.get("caixa_dir"), "patrimonio_dir": vals.get("patrimonio_dir"),
+        "fco": fco, "fco_dir": fco_dir, "fco_base": (f"{meses}M YTD" if dez_q and meses else "Fiscal year"),
     }
     # a API de fatos as vezes anda atras do ultimo arquivamento (ex.: Citigroup)
     defasagem = None
