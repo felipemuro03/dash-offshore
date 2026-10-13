@@ -29,6 +29,10 @@ URL_SUBMISSIONS = "https://data.sec.gov/submissions/CIK{cik:010d}.json"
 URL_INDICE = "https://www.sec.gov/Archives/edgar/data/{cik}/{semhifen}/{accn}-index.htm"
 URL_EMPRESA = "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK={cik:010d}&type={tipo}&dateb=&owner=include&count=40"
 PAUSA_ENTRE_CHAMADAS = 0.12  # a SEC pede <= 10 requisicoes/s
+# Suba este numero SEMPRE que mudar a estrutura dos dados devolvidos por carregar_*/buscar_perfil: o cache do
+# Streamlit so enxerga o codigo da propria funcao em cache (nao o das que ela chama) e, sem isso, dados velhos
+# ficam ate 6 h no app publicado e quebram a pagina nova (KeyError).
+VERSAO_DADOS = 3
 
 FLUXO, INSTANTE = "fluxo", "instante"
 
@@ -428,12 +432,12 @@ def carregar_empresa_bruto(cik):
 
 
 @st.cache_data(ttl=6 * 3600, show_spinner=False)
-def buscar_perfil(cik):
+def buscar_perfil(cik, versao=VERSAO_DADOS):
     return _buscar_perfil_bruto(cik)
 
 
 @st.cache_data(ttl=6 * 3600, show_spinner=False)
-def carregar_empresa(cik):
+def carregar_empresa(cik, versao=VERSAO_DADOS):
     return carregar_empresa_bruto(cik)
 
 
@@ -445,7 +449,7 @@ def _carregar_um(cik):
 
 
 @st.cache_data(ttl=6 * 3600, show_spinner=False)
-def carregar_varios(ciks):
+def carregar_varios(ciks, versao=VERSAO_DADOS):
     """ciks: tupla de CIKs. Baixa tudo em paralelo (4 threads — ~3 req/s, bem abaixo do limite de
     10/s da SEC). Devolve {cik: dados} e {cik: erro}."""
     from concurrent.futures import ThreadPoolExecutor

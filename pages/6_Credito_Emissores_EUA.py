@@ -60,7 +60,7 @@ if arquivo_excel is not None:
 auto = mapa[(mapa["Tipo"] == "Auto") & (mapa["CIK"] != "")]
 ciks = sorted({int(c) for c in auto["CIK"]})
 with st.spinner(f"Buscando as demonstrações de {len(ciks)} empresas na SEC (~30 s na primeira vez; depois fica em cache)..."):
-    resultados, erros = sec_edgar.carregar_varios(tuple(ciks))
+    resultados, erros = sec_edgar.carregar_varios(tuple(ciks), sec_edgar.VERSAO_DADOS)
 
 if erros:
     st.warning("Não consegui buscar na SEC: " + "; ".join(f"CIK {c} ({e})" for c, e in erros.items()))
@@ -156,7 +156,7 @@ with aba_geral:
             texto, link = "", None
             if m["CIK"]:
                 try:
-                    p = sec_edgar.buscar_perfil(int(m["CIK"]))
+                    p = sec_edgar.buscar_perfil(int(m["CIK"]), sec_edgar.VERSAO_DADOS)
                     arq = p["ultimos_arquivamentos"][0] if p["ultimos_arquivamentos"] else None
                     if arq:
                         texto = f"{arq['form']} de {arq['filed']:%d/%m/%Y}"
@@ -341,6 +341,6 @@ with aba_detalhe:
                 opcoes = {f"{n} (CIK {c})": c for c, n in zip(achados["CIK"], achados["Nome"])}
                 nome_escolhido = st.selectbox("Empresa", list(opcoes), key="ce_busca_escolha")
                 with st.spinner("Buscando na SEC..."):
-                    extra = sec_edgar.carregar_empresa(int(opcoes[nome_escolhido]))
+                    extra = sec_edgar.carregar_empresa(int(opcoes[nome_escolhido]), sec_edgar.VERSAO_DADOS)
                 st.subheader(nome_escolhido)
                 _detalhe(extra, "busca")
