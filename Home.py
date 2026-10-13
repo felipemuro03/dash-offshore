@@ -85,6 +85,15 @@ with st.container(border=True):
     )
     st.page_link("pages/5_Oportunidades_Fixed_Income.py", label="Abrir", icon="➡️")
 
+with st.container(border=True):
+    st.markdown("#### 🩺 Crédito — Saúde dos Emissores (EUA)")
+    st.write(
+        "Busca na SEC as demonstrações (10-K/10-Q) dos emissores dos bonds da base e calcula "
+        "alavancagem, cobertura de juros, liquidez e fluxo de caixa, com um sinal pra ver de "
+        "relance quem está saudável e quem merece atenção."
+    )
+    st.page_link("pages/6_Credito_Emissores_EUA.py", label="Abrir", icon="➡️")
+
 st.divider()
 st.caption(
     "Cada universo de ativos e editavel direto na pagina (botao 'Adicionar ticker ao "
