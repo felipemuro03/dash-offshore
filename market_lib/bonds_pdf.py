@@ -261,6 +261,26 @@ def _montar_tabela_evolucao(df):
     return tabela
 
 
+def _resumo_desde_o_inicio(df):
+    """Por posicao (identificador), compara o agio/desagio (%) do ULTIMO snapshot com o do PRIMEIRO.
+    Devolve (melhoraram, pioraram, iguais, sem_comparacao) — contagens de bonds."""
+    chave = "Identificador" if "Identificador" in df.columns else "Descricao"
+    melhorou = piorou = iguais = sem_comparacao = 0
+    for _, g in df.sort_values("Data").groupby(chave):
+        g = g.dropna(subset=["Variacao (%)"])
+        if len(g) < 2:
+            sem_comparacao += 1
+            continue
+        dif = g["Variacao (%)"].iloc[-1] - g["Variacao (%)"].iloc[0]
+        if dif > 0:
+            melhorou += 1
+        elif dif < 0:
+            piorou += 1
+        else:
+            iguais += 1
+    return melhorou, piorou, iguais, sem_comparacao
+
+
 def gerar_pdf_evolucao(df, cliente):
     """df: evolucao de todas as posicoes de 1 cliente, ja com a coluna 'Tendência' calculada
     (mesmo formato exibido na tela — colunas Data, Descricao, Preco, Valor Atual (US$),
@@ -273,15 +293,19 @@ def gerar_pdf_evolucao(df, cliente):
     # entre snapshots, e contar por descricao inflava o numero (29 em vez de 15 bonds)
     n_posicoes = df["Identificador"].nunique() if "Identificador" in df.columns else df["Descricao"].nunique()
     n_snapshots = df["Data"].nunique()
-    n_melhorou = int(df["Tendência"].str.startswith("▲").sum())
-    n_piorou = int(df["Tendência"].str.startswith("▼").sum())
+    n_melhorou, n_piorou, n_iguais, n_sem_comparacao = _resumo_desde_o_inicio(df)
 
     cards = [
         ("Posições Acompanhadas", str(n_posicoes), False),
         ("Snapshots no Período", str(n_snapshots), False),
-        ("Melhoraram", str(n_melhorou), False),
-        ("Pioraram", str(n_piorou), True),
+        ("Melhoraram desde o início", str(n_melhorou), False),
+        ("Pioraram desde o início", str(n_piorou), True),
     ]
+    extras = []
+    if n_iguais:
+        extras.append(f"{n_iguais} sem variação")
+    if n_sem_comparacao:
+        extras.append(f"{n_sem_comparacao} com um único registro (sem comparação)")
 
     largura_conteudo = doc.width
 
@@ -289,14 +313,20 @@ def gerar_pdf_evolucao(df, cliente):
         Paragraph(f"Evolução das posições — {cliente}", _ESTILO_TITULO),
         Paragraph(f"Gerado em {dt.date.today().strftime('%d/%m/%Y')}", _ESTILO_SUB),
         _grade_cards(cards, por_linha=4, largura_total=largura_conteudo),
+        Paragraph(
+            "Melhoraram / Pioraram: por posição, o ágio/deságio (%) do último snapshot contra o do primeiro "
+            "snapshot daquela posição (bonds, não comparações)."
+            + (f" Fora da contagem: {'; '.join(extras)}." if extras else ""),
+            _ESTILO_RODAPE,
+        ),
         Spacer(1, 10),
         Paragraph("Histórico por posição", _ESTILO_SECAO),
         _montar_tabela_evolucao(df.sort_values(["Descricao", "Data"])),
         Spacer(1, 10),
         Paragraph(
-            "Tendência compara cada posição só com o próprio histórico (não entre bonds "
+            "A coluna Tendência compara cada snapshot com o anterior da mesma posição (não entre bonds "
             "diferentes) — 'primeiro registro' quando só há 1 snapshot salvo pra aquela "
-            "posição ainda.",
+            "posição ainda. Os cartões do topo comparam o primeiro com o último snapshot.",
             _ESTILO_RODAPE,
         ),
     ]
