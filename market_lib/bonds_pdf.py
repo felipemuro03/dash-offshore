@@ -269,7 +269,9 @@ def gerar_pdf_evolucao(df, cliente):
         "Evolução das Posições — Fixed Income (Bonds)", f"Cliente: {cliente}"
     )
 
-    n_posicoes = df["Descricao"].nunique()
+    # por identificador (CUSIP/ISIN): o BTG escreve a descricao do mesmo bond de jeitos diferentes
+    # entre snapshots, e contar por descricao inflava o numero (29 em vez de 15 bonds)
+    n_posicoes = df["Identificador"].nunique() if "Identificador" in df.columns else df["Descricao"].nunique()
     n_snapshots = df["Data"].nunique()
     n_melhorou = int(df["Tendência"].str.startswith("▲").sum())
     n_piorou = int(df["Tendência"].str.startswith("▼").sum())
