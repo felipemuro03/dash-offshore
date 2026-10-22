@@ -1,0 +1,2 @@
+Montserrat and Rubik — SIL Open Font License 1.1 (https://openfontlicense.org).
+Source: https://github.com/google/fonts (ofl/montserrat, ofl/rubik). Static instances (weights 400/500/600/700) generated from the variable fonts with fontTools.
