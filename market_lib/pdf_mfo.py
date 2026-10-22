@@ -361,15 +361,9 @@ def _tabela_historico(bonds, st):
               ("LINEBELOW", (0, 1), (-1, -1), 0.3, LINHA)]
     for b in bonds:
         linha_grupo = len(dados)
-        di = b["desde_inicio"]
-        if di is None:
-            resumo = f'<font color="{MUTED.hexval()}">um único registro</font>'
-        else:
-            cor = VERDE if di > 0 else VERMELHO if di < 0 else MUTED
-            resumo = f'Desde o início: <font color="{cor.hexval()}">{("+" if di > 0 else "")}{br(di * 100)} p.p.</font>'
         etiqueta = f'<font name="{_f("Montserrat-Regular")}" size="6.4" color="{MUTED.hexval()}">&nbsp;&nbsp;{b["custodia"]} · {b["id"]}</font>'
-        dados.append([Paragraph(f"{b['descricao']}{etiqueta}", st["grupo"]), "", "", Paragraph(resumo, st["grupo_dir"]), "", ""])
-        estilo += [("SPAN", (0, linha_grupo), (2, linha_grupo)), ("SPAN", (3, linha_grupo), (5, linha_grupo)),
+        dados.append([Paragraph(f"{b['descricao']}{etiqueta}", st["grupo"]), "", "", "", "", ""])
+        estilo += [("SPAN", (0, linha_grupo), (5, linha_grupo)),
                    ("BACKGROUND", (0, linha_grupo), (-1, linha_grupo), CLARO2),
                    ("LINEABOVE", (0, linha_grupo), (-1, linha_grupo), 0.6, OURO)]
         for _, r in b["linhas"].iterrows():
@@ -452,7 +446,7 @@ def gerar_pdf_evolucao_mfo(df, cliente):
         Paragraph("Melhoraram / pioraram: por posição, o ágio/deságio (%) do último snapshot contra o do primeiro snapshot daquela posição "
                   "(contagem de bonds, não de comparações)." + (f" Fora da contagem: {'; '.join(extras)}." if extras else "") +
                   " Na tabela das páginas seguintes, a coluna Tendência compara cada snapshot com o anterior da mesma posição (nunca entre bonds "
-                  "diferentes) e ‘Desde o início’ compara o último snapshot com o primeiro. Variação = valor atual − valor de compra. "
+                  "diferentes). Variação = valor atual − valor de compra. "
                   "Rentabilidade passada não é garantia de rentabilidade futura.", st["fonte"]),
         Spacer(1, 12),
     ]
