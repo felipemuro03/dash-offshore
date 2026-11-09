@@ -131,4 +131,8 @@ def evolucao_cliente(historico_df, cliente):
     """Evolucao de todas as posicoes de um cliente, uma ao lado da outra — agrupado por
     posicao (Identificador) e ordenado por data dentro de cada grupo."""
     filtro = historico_df[historico_df["Cliente"] == cliente].copy()
-    return filtro.sort_values(["Descricao", "Identificador", "Data"]).reset_index(drop=True)
+    # a ordem dos bonds segue a descricao MAIS RECENTE de cada um. Ordenar pela descricao de cada linha
+    # embaralhava as datas: o BTG escreve a descricao do mesmo bond de jeitos diferentes entre snapshots, e a
+    # tendencia (diff entre linhas consecutivas) comparava snapshots fora de ordem.
+    filtro["_ordem_desc"] = filtro.sort_values("Data").groupby("Identificador")["Descricao"].transform("last")
+    return filtro.sort_values(["_ordem_desc", "Identificador", "Data"]).drop(columns="_ordem_desc").reset_index(drop=True)

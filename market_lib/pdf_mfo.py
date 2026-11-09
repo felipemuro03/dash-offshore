@@ -115,6 +115,9 @@ def _por_bond(df):
     saida = []
     for ident, g in df.sort_values("Data").groupby(chave):
         g = g.reset_index(drop=True)
+        # tendencia recalculada aqui, por data, em vez de confiar na coluna recebida
+        g["Tendência"] = g["Variacao (%)"].diff().map(
+            lambda d: "— primeiro registro" if pd.isna(d) else ("▲ Melhorou" if d > 0 else "▼ Piorou" if d < 0 else "● Igual"))
         v = g["Variacao (%)"].dropna()
         saida.append({
             "id": ident, "descricao": _limpar_descricao(g["Descricao"].iloc[-1]),
